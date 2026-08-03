@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="3D选号工具">
+<meta name="theme-color" content="#165DFF">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{primary:'#165DFF'}}}}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",system-ui,-apple-system,BlinkMacSystemFont,sans-serif}
+body{
+  background: linear-gradient(135deg,#42275a,#734b6d);
+  padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+  min-height:100vh;
+}
+h1{
+  text-align:center;
+  color:#fff;
+  font-size:22px;
+  margin:12px 0 16px;
+}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:16px;
+  max-width:1400px;
+  margin:0 auto 16px;
+}
+.card-title{
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.tag-3d{
+  background:#e64340;
+  color:#fff;
+  font-size:13px;
+  padding:2px 8px;
+  border-radius:12px;
+}
+/* 浅蓝色外层容器，所有输入组件边界锁定 */
+.input-wrap{
+  background:#f0f9ff;
+  border:2px solid #94bfff;
+  border-radius:14px;
+  padding:16px;
+  overflow:hidden;
+}
+.input-top-title{
+  font-size:16px;
+  color:#1940af;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+/* 输入行自适应布局，防止横向溢出 */
+.input-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+}
+.input-label{
+  width:82px;
+  font-size:14px;
+  color:#333;
+  font-weight:600;
+  flex-shrink:0;
+}
+.issue-input{
+  width:102px;
+  height:42px;
+  font-size:15px;
+  text-align:center;
+  border:1px solid #cccccc;
+  border-radius:10px;
+  outline:none;
+  background:#fff;
+  flex-shrink:0;
+}
+/* 蓝色号码框，限制最大宽度，禁止溢出 */
+.num-input{
+  flex:1;
+  min-width:110px;
+  max-width:100%;
+  height:50px;
+  font-size:24px;
+  text-align:center;
+  border:3px solid #4080ff;
+  border-radius:12px;
+  font-weight:bold;
+  letter-spacing:4px;
+  outline:none;
+  background:#fff;
+}
+.btn-arrow-group{
+  display:flex;
+  gap:16px;
+  justify-content:center;
+  margin-top:4px;
+  margin-bottom:12px;
+  width:100%;
+}
+.arrow-btn{
+  width:48px;
+  height:48px;
+  font-size:22px;
+  border:1px solid #ccc;
+  border-radius:10px;
+  background:#f8f8f8;
+  cursor:pointer;
+}
+.target-row{
+  margin-bottom:16px;
+  background:#fff7ed;
+  border-left:4px solid #f97316;
+  padding:10px 14px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.target-text{
+  font-size:15px;
+  color:#92400e;
+}
+.target-num{
+  font-size:18px;
+  font-weight:bold;
+  color:#ea580c;
+}
+.wrap-green-btn{
+  text-align:center;
+  margin-bottom:8px;
+}
+.green-main-btn{
+  width:100%;
+  background:linear-gradient(135deg,#16a34a,#15803d);
+  color:#fff;
+  border:none;
+  font-size:18px;
+  font-weight:bold;
+  padding:16px 10px;
+  border-radius:12px;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(22,163,74,0.35);
+}
+.bottom-desc{
+  text-align:center;
+  font-size:13px;
+  color:#555;
+  line-height:1.5;
+}
+.result-area{
+  margin-top:20px;
+  display:none;
+}
+.result-title{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:15px;
+  color:#444;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+}
+.count-badge{
+  background:#22c55e;
+  color:#fff;
+  font-size:12px;
+  padding:2px 8px;
+  border-radius:10px;
+}
+.digit-box-row{
+  display:flex;
+  gap:6px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.digit-item-red{
+  width:calc(10% - 6px);
+  min-width:42px;
+  height:48px;
+  border-radius:10px;
+  background:linear-gradient(135deg,#ff5c5c,#ee4444);
+  color:#fff;
+  font-size:22px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.digit-item-gray{
+  width:calc(10% - 6px);
+  min-width:42px;
+  height:48px;
+  border-radius:10px;
+  background:#eeeeee;
+  color:#bbbbbb;
+  font-size:22px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.digit-item-yellow{
+  width:calc(10% - 6px);
+  min-width:42px;
+  height:48px;
+  border-radius:10px;
+  background:linear-gradient(135deg,#ffc845,#f8a822);
+  color:#fff;
+  font-size:22px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.pool-type-bar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:10px 0;
+}
+.pool-type-btn{
+  flex:1;
+  min-width:85px;
+  padding:9px 4px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  background:#fff;
+  color:#333;
+  font-size:14px;
+  font-weight:bold;
+  text-align:center;
+  cursor:pointer;
+}
+.combo-content{
+  min-height:160px;
+  border:1px solid #eee;
+  background:#fafafa;
+  padding:10px;
+  border-radius:8px;
+  line-height:2.2;
+  letter-spacing:1px;
+  font-size:14px;
+  word-break:break-all;
+}
+.filter-panel{
+  border:1px solid #d1d5db;
+  padding:14px;
+  border-radius:8px;
+  margin-bottom:16px;
+  background:#fff;
+}
+.filter-title-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.filter-title{
+  font-size:16px;
+  font-weight:bold;
+  color:#222;
+}
+.filter-desc{
+  font-size:12px;
+  color:#666;
+  margin-bottom:10px;
+  line-height:1.4;
+}
+.num-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.num-btn{
+  width:42px;
+  height:42px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  background:#fff;
+  color:#333;
+  font-size:18px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+}
+.num-btn.active{
+  background:#165DFF;
+  color:#fff;
+  border-color:#165DFF;
+}
+.num-btn.yellow.active{
+  background:#f59e0b;
+  border-color:#f59e0b;
+  color:#fff;
+}
+.num-btn.red.active{
+  background:#e64340;
+  border-color:#e64340;
+  color:#fff;
+}
+.check-row{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.check-row label{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:14px;
+  color:#333;
+}
+.reset-filter-btn{
+  width:100%;
+  background:#6b7280;
+  color:#fff;
+  padding:14px;
+  border:none;
+  border-radius:6px;
+  font-size:18px;
+  margin-top:12px;
+}
+.copy-filter-btn{
+  width:100%;
+  background:#22c55e;
+  color:#fff;
+  padding:14px;
+  border:none;
+  border-radius:6px;
+  font-size:18px;
+  margin-top:12px;
+}
+.result-card{
+  background:#fff;
+  border-radius:16px;
+  padding:12px;
+  max-width:1400px;
+  margin:0 auto 16px;
+}
+.result-card-title{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:12px;
+  color:#222;
+}
+.result-section{
+  margin-bottom:12px;
+}
+.result-section-title{
+  font-size:15px;
+  font-weight:bold;
+  margin-bottom:8px;
+  padding-bottom:6px;
+  border-bottom:1px solid #eee;
+  color:#444;
+  cursor:pointer;
+  /* 增加鼠标手势提示 */
+  text-decoration:underline dotted;
+}
+.result-section-title.red{color:#dc2626;}
+.result-section-title.orange{color:#f59e0b;}
+.result-section-title.blue{color:#165DFF;}
+.result-numbers{
+  border:1px solid #eee;
+  background:#fafafa;
+  border-radius:8px;
+  padding:10px;
+  min-height:140px;
+  max-height:280px;
+  overflow-y:auto;
+  word-break:break-all;
+  line-height:1.8;
+  font-size:13px;
+  letter-spacing:0.5px;
+}
+.result-numbers span{
+  display:inline-block;
+  margin:2px 4px 2px 0;
+  padding:2px 6px;
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:4px;
+  color:#333;
+}
+.copy-toast{
+  position:fixed;
+  left:50%;
+  top:45%;
+  transform:translate(-50%,-50%);
+  background:rgba(0,0,0,0.72);
+  color:#fff;
+  padding:10px 26px;
+  border-radius:999px;
+  font-size:17px;
+  z-index:99999;
+  display:none;
+}
+@media(max-width:375px){
+  body{
+    padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom) 10px;
+  }
+  .card{
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .input-wrap{
+    padding:14px;
+  }
+  .input-label{
+    width:70px;
+    font-size:13px;
+  }
+  .issue-input{
+    width:86px;
+    height:40px;
+    font-size:14px;
+  }
+  .num-input{
+    height:46px;
+    font-size:20px;
+    letter-spacing:2px;
+  }
+  .arrow-btn{
+    width:42px;
+    height:42px;
+    font-size:20px;
+  }
+  .green-main-btn{
+    padding:14px 8px;
+    font-size:17px;
+  }
+}
+</style>
+</head>
+<body>
+<h1>🎯 3D / 排列三 号码候选池计算器</h1>
+
+<!-- 模块一：候选池计算器 -->
+<div class="card">
+    <div class="card-title">
+        福彩3D
+        <span class="tag-3d">候选池</span>
+    </div>
+    <div class="input-wrap">
+        <div class="input-top-title">📝 输入最近两期开奖号码：</div>
+
+        <div class="input-row">
+            <div class="input-label">上上期 (N)：</div>
+            <input class="issue-input" id="calc_prev2_issue" value="2026188">
+            <input class="num-input" id="calc_prev2_num" value="969">
+        </div>
+        <div class="input-row">
+            <div class="input-label">上一期 (N+1)：</div>
+            <input class="issue-input" id="calc_prev1_issue" value="2026189">
+            <input class="num-input" id="calc_prev1_num" value="558">
+        </div>
+        <div class="btn-arrow-group">
+            <button class="arrow-btn" onclick="calcShiftIssue(-1)">◀</button>
+            <button class="arrow-btn" onclick="calcShiftIssue(1)">▶</button>
+        </div>
+
+        <div class="target-row">
+            <span class="target-text">🎯 预测目标：第 <span class="target-num" id="calc_target_text">2026190</span> 期 (N+2)</span>
+        </div>
+        <div class="wrap-green-btn">
+            <button class="green-main-btn" onclick="calcManual()">🚀 开始计算候选池</button>
+        </div>
+        <div class="bottom-desc">
+            💡 输入2位数字自动补前导0，算法完全本地计算，无需网络也可使用
+        </div>
+    </div>
+
+    <div class="result-area" id="calc_result_box">
+        <div class="result-title">
+            第<span id="calc_res_target">2026190</span>期号码候选池（点击数字勾选/取消）
+            <span class="count-badge" id="calc_sel_count">0个</span>
+        </div>
+        <div class="digit-box-row" id="calc_sel_digit"></div>
+        <div class="result-title">
+            和尾候选池（点击数字勾选/取消）
+            <span class="count-badge" id="calc_tail_count">0个</span>
+        </div>
+        <div class="digit-box-row" id="calc_tail_digit"></div>
+        <!-- 复制按钮容器 -->
+        <div class="pool-type-bar" id="poolBtnContainer">
+            <button class="pool-type-btn" data-pool-type="all">全部(<span id="pool_all_cnt">0</span>)</button>
+            <button class="pool-type-btn" data-pool-type="san">组三(<span id="pool_san_cnt">0</span>)</button>
+            <button class="pool-type-btn" data-pool-type="liu">组六(<span id="pool_liu_cnt">0</span>)</button>
+            <button class="pool-type-btn" data-pool-type="bao">豹子(<span id="pool_bao_cnt">0</span>)</button>
+        </div>
+        <div class="combo-content" id="calc_combo_view"></div>
+    </div>
+</div>
+
+<!-- 模块二：独立号码筛选器 -->
+<div class="card">
+    <div class="card-title">
+        号码筛选器
+        <span class="tag-3d">独立运行</span>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">候选号码</h3>
+            <label><input type="checkbox" id="filter_enableCandidate"> 启用</label>
+        </div>
+        <div class="filter-desc">点击选择号码，选中的数字才参与后续组合；不启用则默认 0-9 全部参与。</div>
+        <div class="num-grid" id="candidateWrap"></div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">和尾过滤</h3>
+            <label><input type="checkbox" id="filter_enableTail"> 启用</label>
+        </div>
+        <div class="filter-desc">尾0=0/10/20，尾1=1/11/21，尾2=2/12/22，尾3=3/13/23，尾4=4/14/24，尾5=5/15/25，尾6=6/16/26，尾7=7/17/27，尾8=8/18，尾9=9/19</div>
+        <div class="num-grid" id="tailWrap"></div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">排除和值（永久生效）</h3>
+        </div>
+        <div class="filter-desc">点击数字剔除对应和值号码，选中和值的号码不会出现在结果中。</div>
+        <div class="num-grid" id="banWrap"></div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">跨度过滤</h3>
+            <label><input type="checkbox" id="filter_enableSd"> 启用</label>
+        </div>
+        <div class="num-grid" id="sdWrap"></div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">连号规则</h3>
+            <label><input type="checkbox" id="filter_enableLian"> 启用</label>
+        </div>
+        <div class="check-row">
+            <label><input type="radio" name="filter_lianOpt" value="onlyLian"> 仅连号</label>
+            <label><input type="radio" name="filter_lianOpt" value="onlyDuan"> 仅断号</label>
+        </div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">号码类型</h3>
+            <label><input type="checkbox" id="filter_enableType"> 启用</label>
+        </div>
+        <div class="check-row">
+            <label><input type="checkbox" id="filter_liu"> 组六</label>
+            <label><input type="checkbox" id="filter_san"> 组三</label>
+            <label><input type="checkbox" id="filter_bao"> 豹子</label>
+        </div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">和值单双</h3>
+            <label><input type="checkbox" id="filter_enableHeOddEven"> 启用</label>
+        </div>
+        <div class="filter-desc">按和值的单双筛选，例如：335和值11为单，334和值10为双。</div>
+        <div class="check-row">
+            <label><input type="radio" name="filter_heOddEvenOpt" value="all"> 不限</label>
+            <label><input type="radio" name="filter_heOddEvenOpt" value="odd"> 和值为单</label>
+            <label><input type="radio" name="filter_heOddEvenOpt" value="even"> 和值为双</label>
+        </div>
+    </div>
+    <div class="filter-panel">
+        <div class="filter-title-row">
+            <h3 class="filter-title">胆码过滤</h3>
+            <label><input type="checkbox" id="filter_enableDan"> 启用</label>
+        </div>
+        <div class="num-grid" id="danWrap"></div>
+        <div class="check-row" style="margin-top:10px;">
+            <label><input type="radio" name="filter_danOpt" value="has"> 包含选中数字</label>
+            <label><input type="radio" name="filter_danOpt" value="no"> 不含选中数字</label>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mt-4">
+        <button id="filterResetBtn" class="reset-filter-btn">重置全部</button>
+        <button id="filterCopyBtn" class="copy-filter-btn">复制全部号码</button>
+    </div>
+</div>
+
+<div class="result-card">
+    <h2 class="result-card-title">筛选结果 | 总注数：<span id="filterTotalCount" class="text-primary">0</span></h2>
+    <div class="result-section">
+        <h4 class="result-section-title red" id="filterTitleBao">豹子（0）</h4>
+        <div id="filterBaoBox" class="result-numbers"></div>
+    </div>
+    <div class="result-section">
+        <h4 class="result-section-title orange" id="filterTitleSan">组三（0）</h4>
+        <div id="filterSanBox" class="result-numbers"></div>
+    </div>
+    <div class="result-section">
+        <h4 class="result-section-title blue" id="filterTitleLiu">组六（0）</h4>
+        <div id="filterLiuBox" class="result-numbers"></div>
+    </div>
+</div>
+
+<div class="copy-toast" id="copyToast"></div>
+
+<script>
+// 通用复制与提示
+async function safeCopy(text){
+    return new Promise(resolve=>{
+        if(navigator.clipboard && window.isSecureContext){
+            navigator.clipboard.writeText(text).then(resolve).catch(fallbackCopy);
+        }else fallbackCopy();
+        function fallbackCopy(){
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position='fixed';
+            ta.style.left='-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            resolve();
+        }
+    })
+}
+function showCopyToast(msg){
+    const toast = document.getElementById('copyToast');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(()=>toast.style.display="none",1300);
+}
+
+// ====================== 候选池计算器模块 ======================
+const CalcModule = (function(){
+    function pad3(s){
+        s = String(s).replace(/\D/g,'');
+        while(s.length < 3) s = '0' + s;
+        return s.slice(-3);
+    }
+    function getDigits(s){
+        const str = pad3(s);
+        return [Number(str[0]),Number(str[1]),Number(str[2])];
+    }
+    function calcNumPool(numA,numB){
+        const a = getDigits(numA);
+        const b = getDigits(numB);
+        const set = new Set();
+        for(let i of a) for(let j of b){
+            set.add((i+j)%10);
+            set.add(Math.abs(i-j)%10);
+        }
+        return Array.from(set).sort((x,y)=>x-y);
+    }
+    function calcTailPool(numA,numB){
+        const a = getDigits(numA), b = getDigits(numB);
+        const sumA = (a[0]+a[1]+a[2])%10;
+        const sumB = (b[0]+b[1]+b[2])%10;
+        const v1 = (sumA+sumB)%10, v2 = Math.abs(sumA-sumB)%10;
+        const seed = [sumA,sumB,v1,v2];
+        const set = new Set();
+        seed.forEach(v=>{
+            set.add(v); set.add((10-v)%10); set.add((9+v)%10); set.add((9-v)%10);
+        });
+        return Array.from(set).sort((x,y)=>x-y);
+    }
+    function getAllCombos(numList,tailList){
+        const res = [];
+        for(let h of numList)for(let t of numList)for(let u of numList){
+            if(tailList.includes((h+t+u)%10)) res.push(`${h}${t}${u}`);
+        }
+        return res;
+    }
+    function getCodeType(code){
+        const [x,y,z] = code.split('').map(Number);
+        if(x===y&&y===z) return 'bao';
+        if(x===y||y===z||x===z) return 'san';
+        return 'liu';
+    }
+    let state = {
+        fullNum:[],fullTail:[],pickNum:new Set(),pickTail:new Set(),
+        allList:[],liuList:[],sanList:[],baoList:[]
+    };
+    function renderDigit(boxId,countId,dataSet,isYellow){
+        const wrap = document.getElementById(boxId);
+        wrap.innerHTML = '';
+        for(let i=0;i<=9;i++){
+            const div = document.createElement('div');
+            const has = dataSet.has(i);
+            div.className = isYellow ? (has ? "digit-item-yellow" : "digit-item-gray") : (has ? "digit-item-red" : "digit-item-gray");
+            div.innerText = i;
+            div.onclick = ()=>{
+                has ? dataSet.delete(i) : dataSet.add(i);
+                refresh();
+            };
+            wrap.appendChild(div);
+        }
+        document.getElementById(countId).innerText = dataSet.size + '个';
+    }
+    function refresh(){
+        renderDigit('calc_sel_digit','calc_sel_count',state.pickNum,false);
+        renderDigit('calc_tail_digit','calc_tail_count',state.pickTail,true);
+        const list = getAllCombos(Array.from(state.pickNum),Array.from(state.pickTail));
+        state.allList = list;
+        state.liuList = [];state.sanList = [];state.baoList = [];
+        list.forEach(c=>{
+            const tp = getCodeType(c);
+            if(tp==='liu') state.liuList.push(c);
+            if(tp==='san') state.sanList.push(c);
+            if(tp==='bao') state.baoList.push(c);
+        });
+        document.getElementById('pool_all_cnt').innerText = state.allList.length;
+        document.getElementById('pool_liu_cnt').innerText = state.liuList.length;
+        document.getElementById('pool_san_cnt').innerText = state.sanList.length;
+        document.getElementById('pool_bao_cnt').innerText = state.baoList.length;
+        document.getElementById('calc_combo_view').innerText = list.join(' ');
+    }
+    function runCalc(){
+        let n2 = document.getElementById('calc_prev2_num').value;
+        let n1 = document.getElementById('calc_prev1_num').value;
+        n2 = pad3(n2); n1 = pad3(n1);
+        document.getElementById('calc_prev2_num').value = n2;
+        document.getElementById('calc_prev1_num').value = n1;
+        const i1 = Number(document.getElementById('calc_prev1_issue').value);
+        const target = isNaN(i1) ? "下一期" : String(i1+1);
+        document.getElementById('calc_target_text').innerText = target;
+        document.getElementById('calc_res_target').innerText = target;
+        state.fullNum = calcNumPool(n1,n2);
+        state.fullTail = calcTailPool(n1,n2);
+        state.pickNum = new Set(state.fullNum);
+        state.pickTail = new Set(state.fullTail);
+        document.getElementById('calc_result_box').style.display = "block";
+        refresh();
+    }
+    function shiftIssue(delta){
+        let i2 = Number(document.getElementById('calc_prev2_issue').value);
+        let i1 = Number(document.getElementById('calc_prev1_issue').value);
+        if(isNaN(i1)||isNaN(i2)) return;
+        i2 += delta; i1 += delta;
+        document.getElementById('calc_prev2_issue').value = i2;
+        document.getElementById('calc_prev1_issue').value = i1;
+        document.getElementById('calc_target_text').innerText = i1 + 1;
+    }
+    //【修复】使用closest精准定位按钮，无视内部span子元素
+    function bindPoolButtons(){
+        const container = document.getElementById('poolBtnContainer');
+        container.addEventListener('click',async function(e){
+            // 向上寻找最近的 .pool-type-btn，解决点击span文字识别失败
+            const btn = e.target.closest('.pool-type-btn');
+            if(!btn) return;
+            const type = btn.dataset.poolType;
+            let targetArr = [];
+            if(type === 'all') targetArr = state.allList;
+            if(type === 'liu') targetArr = state.liuList;
+            if(type === 'san') targetArr = state.sanList;
+            if(type === 'bao') targetArr = state.baoList;
+            if(targetArr.length === 0){
+                showCopyToast('暂无对应号码');
+                return;
+            }
+            await safeCopy(targetArr.join(' '));
+            showCopyToast(`已复制【${btn.textContent.split('(')[0]}】全部号码！`);
+        })
+    }
+    return {
+        manual:runCalc,
+        shift:shiftIssue,
+        bind:bindPoolButtons
+    }
+})();
+window.calcManual = ()=>CalcModule.manual();
+window.calcShiftIssue = (delta)=>CalcModule.shift(delta);
+
+// ====================== 独立筛选器模块 ======================
+const FilterModule = (function(){
+    let selectedCandidate = new Set([0,1,2,3,4,5,6,7,8,9]);
+    let selectedTail = new Set();
+    let selectedBan = new Set();
+    let selectedSd = new Set();
+    let selectedDan = new Set();
+    let cacheBao = [], cacheSan = [], cacheLiu = [];
+
+    function getAllCode(){
+        const arr = [];
+        for(let a=0;a<=9;a++)for(let b=0;b<=9;b++)for(let c=0;c<=9;c++)arr.push(`${a}${b}${c}`);
+        return arr;
+    }
+    const allCodeList = getAllCode();
+    function renderWrap(containerId,maxNum,storeSet,colorClass){
+        const wrap = document.getElementById(containerId);
+        if(!wrap) return;
+        wrap.innerHTML = '';
+        for(let i=0;i<=maxNum;i++){
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'num-btn ' + (colorClass||'');
+            btn.textContent = i;
+            btn.dataset.num = i;
+            if(storeSet.has(i)) btn.classList.add('active');
+            btn.onclick = function(){
+                const n = Number(this.dataset.num);
+                storeSet.has(n) ? storeSet.delete(n) : storeSet.add(n);
+                this.classList.toggle('active');
+                runFilter();
+            };
+            wrap.appendChild(btn);
+        }
+    }
+    function initUI(){
+        renderWrap('candidateWrap',9,selectedCandidate,'yellow');
+        renderWrap('tailWrap',9,selectedTail,'red');
+        renderWrap('sdWrap',9,selectedSd,'');
+        renderWrap('danWrap',9,selectedDan,'');
+        renderWrap('banWrap',27,selectedBan,'red');
+    }
+    function getNums(code){return code.split('').map(Number);}
+    function getSum(code){return getNums(code).reduce((s,v)=>s+v,0);}
+    function getTail(code){return getSum(code)%10;}
+    function getSd(code){const n=getNums(code);return Math.max(...n)-Math.min(...n);}
+    function isLian(code){const a=getNums(code).sort((x,y)=>x-y);return a[1]-a[0]===1||a[2]-a[1]===1;}
+    function getType(code){const [x,y,z]=getNums(code);if(x===y&&y===z)return 'bao';if(x===y||y===z||x===z)return 'san';return 'liu';}
+    const tailSumMap = {0:[0,10,20],1:[1,11,21],2:[2,12,22],3:[3,13,23],4:[4,14,24],5:[5,15,25],6:[6,16,26],7:[7,17,27],8:[8,18],9:[9,19]};
+    function runFilter(){
+        const enableCandidate = document.getElementById('filter_enableCandidate').checked;
+        const enableTail = document.getElementById('filter_enableTail').checked;
+        const enableSd = document.getElementById('filter_enableSd').checked;
+        const enableLian = document.getElementById('filter_enableLian').checked;
+        const enableType = document.getElementById('filter_enableType').checked;
+        const enableHeOddEven = document.getElementById('filter_enableHeOddEven').checked;
+        const enableDan = document.getElementById('filter_enableDan').checked;
+
+        const lianOpt = document.querySelector('input[name="filter_lianOpt"]:checked')?.value;
+        const heOpt = document.querySelector('input[name="filter_heOddEvenOpt"]:checked')?.value||'all';
+        const danOpt = document.querySelector('input[name="filter_danOpt"]:checked')?.value||'has';
+
+        const filterLiu = document.getElementById('filter_liu').checked;
+        const filterSan = document.getElementById('filter_san').checked;
+        const filterBao = document.getElementById('filter_bao').checked;
+
+        let resultList = [...allCodeList];
+
+        //候选号码过滤
+        if(enableCandidate){
+            resultList = resultList.filter(code=>{
+                const arr = getNums(code);
+                return arr.every(v=>selectedCandidate.has(v));
+            })
+        }
+        //和尾过滤
+        if(enableTail){
+            resultList = resultList.filter(code=>selectedTail.has(getTail(code)))
+        }
+        //排除和值
+        resultList = resultList.filter(code=>!selectedBan.has(getSum(code)));
+        //跨度过滤
+        if(enableSd){
+            resultList = resultList.filter(code=>selectedSd.has(getSd(code)))
+        }
+        //连号过滤
+        if(enableLian && lianOpt){
+            resultList = resultList.filter(code=>{
+                const l = isLian(code);
+                return lianOpt==='onlyLian' ? l : !l;
+            })
+        }
+        //号码类型
+        if(enableType){
+            resultList = resultList.filter(code=>{
+                const t = getType(code);
+                if(t==='liu') return filterLiu;
+                if(t==='san') return filterSan;
+                if(t==='bao') return filterBao;
+                return true;
+            })
+        }
+        //和值单双
+        if(enableHeOddEven && heOpt!=='all'){
+            resultList = resultList.filter(code=>{
+                const s = getSum(code);
+                return heOpt==='odd' ? s%2===1 : s%2===0;
+            })
+        }
+        //胆码
+        if(enableDan && selectedDan.size>0){
+            resultList = resultList.filter(code=>{
+                const nums = getNums(code);
+                const has = nums.some(d=>selectedDan.has(d));
+                return danOpt==='has' ? has : !has;
+            })
+        }
+
+        cacheBao = [];cacheSan=[];cacheLiu=[];
+        resultList.forEach(c=>{
+            const t = getType(c);
+            if(t==='bao') cacheBao.push(c);
+            if(t==='san') cacheSan.push(c);
+            if(t==='liu') cacheLiu.push(c);
+        });
+        document.getElementById('filterTotalCount').innerText = resultList.length;
+        document.getElementById('filterTitleBao').innerText = `豹子（${cacheBao.length}）`;
+        document.getElementById('filterTitleSan').innerText = `组三（${cacheSan.length}）`;
+        document.getElementById('filterTitleLiu').innerText = `组六（${cacheLiu.length}）`;
+
+        function renderBox(boxId,arr){
+            const box = document.getElementById(boxId);
+            box.innerHTML = '';
+            arr.forEach(num=>{
+                const span = document.createElement('span');
+                span.textContent = num;
+                span.onclick = async ()=>{
+                    await safeCopy(num);
+                    showCopyToast(`已复制号码：${num}`);
+                }
+                box.appendChild(span);
+            })
+        }
+        renderBox('filterBaoBox',cacheBao);
+        renderBox('filterSanBox',cacheSan);
+        renderBox('filterLiuBox',cacheLiu);
+    }
+    function resetAll(){
+        selectedCandidate = new Set([0,1,2,3,4,5,6,7,8,9]);
+        selectedTail.clear();
+        selectedBan.clear();
+        selectedSd.clear();
+        selectedDan.clear();
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+        document.querySelectorAll('input[type="radio"]').forEach(rd=>rd.checked=false);
+        initUI();
+        runFilter();
+    }
+    function copyAllResult(){
+        const all = [...cacheBao,...cacheSan,...cacheLiu];
+        if(all.length===0){
+            showCopyToast('暂无筛选号码');
+            return;
+        }
+        safeCopy(all.join(' ')).then(()=>showCopyToast('全部号码复制成功！'));
+    }
+
+    // 新增：绑定分类标题点击复制
+    function bindTitleCopy(){
+        //豹子标题
+        document.getElementById('filterTitleBao').onclick = async ()=>{
+            if(cacheBao.length===0){
+                showCopyToast('暂无豹子号码');
+                return;
+            }
+            await safeCopy(cacheBao.join(' '));
+            showCopyToast('已复制【豹子】全部号码！');
+        }
+        //组三标题
+        document.getElementById('filterTitleSan').onclick = async ()=>{
+            if(cacheSan.length===0){
+                showCopyToast('暂无组三号码');
+                return;
+            }
+            await safeCopy(cacheSan.join(' '));
+            showCopyToast('已复制【组三】全部号码！');
+        }
+        //组六标题
+        document.getElementById('filterTitleLiu').onclick = async ()=>{
+            if(cacheLiu.length===0){
+                showCopyToast('暂无组六号码');
+                return;
+            }
+            await safeCopy(cacheLiu.join(' '));
+            showCopyToast('已复制【组六】全部号码！');
+        }
+    }
+
+    function bindEvents(){
+        document.getElementById('filterResetBtn').onclick = resetAll;
+        document.getElementById('filterCopyBtn').onclick = copyAllResult;
+        document.querySelectorAll('.filter-panel input').forEach(input=>{
+            input.onchange = runFilter;
+        })
+        bindTitleCopy(); //注册标题点击事件
+    }
+    return {
+        init:function(){initUI();bindEvents();runFilter();}
+    }
+})();
+
+//页面加载完成初始化
+window.addEventListener('DOMContentLoaded',()=>{
+    CalcModule.bind();
+    FilterModule.init();
+})
+</script>
+</body>
+</html>

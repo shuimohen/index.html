@@ -17,8 +17,10 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 .btn.gray{background:#909399;}
 .tip{margin:8px 0;color:#333;font-weight:500;}
 .group-wrap{margin-top:10px;}
+/* 原版：组120/60横向两排 */
 .group-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;}
 .group-item{padding:8px 10px;border:1px solid #ddd;border-radius:8px;cursor:pointer;transition:.2s;border-bottom:2px solid transparent;}
+/* 点击后绿色下划线（你原来要求） */
 .group-item.active{border-bottom-color:#27ae60;color:#27ae60;font-weight:bold;}
 .sub-group{padding-left:16px;margin:4px 0;display:none;}
 .sub-group.open{display:block;}
@@ -65,20 +67,19 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 </div>
 
 <script>
-// 全局变量
+// ========== 全局变量（完全沿用原有逻辑） ==========
 let rawDataList = [];
 let tipText = "等待获取数据";
 const tipBox = document.getElementById('tipBox');
 const fetchBtn = document.getElementById('fetchBtn');
 const parseBtn = document.getElementById('parseBtn');
 
-// 渲染提示
 function renderTip(){
   tipBox.innerText = tipText;
 }
 renderTip();
 
-// ==========【方案B 前端分批拉取核心】==========
+// ==========【方案B 前端分批拉取｜保留原版所有其他逻辑】==========
 fetchBtn.onclick = async function(){
   rawDataList = [];
   const batchSize = 20;
@@ -88,19 +89,26 @@ fetchBtn.onclick = async function(){
     tipText = `⏳ 正在分批拉取：第${batch+1}/${totalBatch}批`;
     renderTip();
     try{
-      let res = await fetch(`/api/p5?offset=${batch*batchSize}`);
-      let ret = await res.json();
-      if(ret.data && Array.isArray(ret.data) && ret.data.length>0){
+      // 调用Pages Function，带offset分页参数
+      const res = await fetch(`/api/p5?offset=${batch*batchSize}`);
+      if(!res.ok){
+        tipText = `❌ 第${batch+1}批接口返回异常`;
+        renderTip();
+        return;
+      }
+      const ret = await res.json();
+      // 兼容探数标准返回结构
+      if(ret.code === 1 && ret.data && Array.isArray(ret.data) && ret.data.length>0){
         rawDataList = rawDataList.concat(ret.data);
       }else{
         break;
       }
     }catch(err){
-      tipText = `❌ 第${batch+1}批拉取异常`;
+      tipText = `❌ 第${batch+1}批拉取异常:${err.message}`;
       renderTip();
       return;
     }
-    await new Promise(resolve=>setTimeout(resolve,350));
+    await new Promise(resolve=>setTimeout(resolve,400));
   }
   rawDataList = rawDataList.slice(0, targetTotal);
   tipText = `✅ 已载入${rawDataList.length}期，可点【解析数据】`;
@@ -115,11 +123,10 @@ parseBtn.onclick = function(){
   }
   tipText = "✅ 解析完成，已生成频次与杀号";
   renderTip();
-  // 原有解析、频次、差5/和9杀号逻辑入口
   calcFilter(rawDataList);
 }
 
-// 生成0-9数字块
+// 生成0-9数字块（点击变蓝，原版逻辑不变）
 function renderNumBox(containerId){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = "";
@@ -138,7 +145,7 @@ renderNumBox("bBox");
 renderNumBox("sBox");
 renderNumBox("gBox");
 
-// 差5配对 | 和9配对
+// 差5 / 和9 配对规则（原样保留）
 const mapDiff5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
 const mapSum9  = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
 
@@ -155,7 +162,6 @@ function calcFilter(list){
   const useD5 = document.getElementById("useDiff5").checked;
   const useS9 = document.getElementById("useSum9").checked;
 
-  // 清空选中
   document.querySelectorAll(".num-block").forEach(el=>el.classList.remove("active"));
 
   if(useD5){
@@ -179,7 +185,7 @@ function setActive(boxId, val){
   if(item) item.classList.add("active");
 }
 
-// 分组点击展开逻辑
+// ===== 分组展开逻辑【原版：组120点击→展开0-2/3-5/6-8/9开头；次级再展开0/1/2开头】=====
 const mainItems = document.querySelectorAll(".group-item[data-type]");
 const subWrap = document.getElementById("subWrap");
 const subOpt = [

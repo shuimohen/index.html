@@ -11,14 +11,21 @@
 body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
-.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;cursor:pointer;font-weight:600;background:#4096ff;color:#fff;border-color:#4096ff;transition:all .2s;}
-.digit.inactive{background:#fff;color:#222;border-color:#dcdfe6;}
+/* 基础数字块 */
+.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;cursor:pointer;font-weight:600;transition:all .2s;color:#222;}
+/* 4种状态 */
+.digit.state-normal{background:#fff;}          /* 未选 白色 */
+.digit.state-high{background:#67c23a;color:#fff;} /* 频次最高8个 绿色 */
+.digit.state-kill{background:#ffd166;color:#222;}/* 杀号 黄色 */
+.digit.state-lowkill{background:#f56c6c;color:#fff;}/* 最低频+杀号重叠 红色 最高优先级 */
+
 .btn{padding:10px 16px;border:none;border-radius:8px;background:#4096ff;color:#fff;cursor:pointer;font-size:15px;}
 .btn.gray{background:#909399;}
 .btn.green{background:#67c23a;}
 .tip{margin:8px;color:#333;font-weight:500;}
 input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;font-size:15px;width:260px;}
 input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;width:60px;font-size:15px;}
+#resultBox{white-space:pre-wrap;margin-top:10px;padding:10px;border:1px solid #eee;border-radius:8px;min-height:60px;max-height:220px;overflow:auto;}
 </style>
 </head>
 <body>
@@ -40,7 +47,7 @@ input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;
 </div>
 
 <div class="card">
-  <div>万 | 千 | 百 | 十 | 个 可选数字(点击色块切换蓝选)</div>
+  <div>万 | 千 | 百 | 十 | 个 可选数字(点击色块手动切换)</div>
   <div class="row">
     <span style="width:44px;">万位</span>
     <div class="row" id="wDigits"></div>
@@ -104,6 +111,7 @@ input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;
     <button id="genBtn" class="btn green">生成符合条件号码</button>
     <button id="copyBtn" class="btn">复制全部结果</button>
   </div>
+  <div id="resultBox"></div>
   <div style="margin-top:14px;">
     <div>号码验证</div>
     <div class="row">
@@ -115,54 +123,72 @@ input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;
 
 <script>
 let rawDataList = [];
+let lastResultList = [];
+// 存储每一位的频次、高频集合、最低频数字、杀号集合
+let posMeta = {
+  w:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
+  q:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
+  b:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
+  s:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
+  g:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()}
+};
 const tipBox = document.getElementById('tipBox');
+const resultBox = document.getElementById('resultBox');
+const posIdMap = {w:"wDigits",q:"qDigits",b:"bDigits",s:"sDigits",g:"gDigits"};
 
-// 渲染0-9数字块，默认蓝色
-function render0to9(containerId){
+// 渲染0-9数字块，绑定点击手动修改状态
+function render0to9(containerId, posKey){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
   for(let i=0;i<=9;i++){
     const d = document.createElement('div');
-    d.className = 'digit';
-    d.innerText = i;
+    d.className = 'digit state-normal';
     d.dataset.val = i;
-    d.onclick = ()=>d.classList.toggle('inactive');
+    d.dataset.pos = posKey;
+    // 手动点击切换，可覆盖自动规则
+    d.onclick = function(){
+      if(this.classList.contains("state-high")){
+        this.className = "digit state-normal";
+        posMeta[posKey].highSet.delete(Number(this.dataset.val));
+      }else{
+        this.className = "digit state-high";
+        posMeta[posKey].highSet.add(Number(this.dataset.val));
+      }
+      renderPosStyle(posKey);
+    }
     wrap.appendChild(d);
   }
 }
-// 渲染0~27 和值
 function render0to27(containerId){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
   for(let i=0;i<=27;i++){
     const d = document.createElement('div');
-    d.className = 'digit';
+    d.className = 'digit state-normal';
     d.innerText = i;
     d.dataset.val = i;
-    d.onclick = ()=>d.classList.toggle('inactive');
+    d.onclick = ()=>d.classList.toggle('state-high');
     wrap.appendChild(d);
   }
 }
-// 渲染0~45 和值
 function render0to45(containerId){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
   for(let i=0;i<=45;i++){
     const d = document.createElement('div');
-    d.className = 'digit';
+    d.className = 'digit state-normal';
     d.innerText = i;
     d.dataset.val = i;
-    d.onclick = ()=>d.classList.toggle('inactive');
+    d.onclick = ()=>d.classList.toggle('state-high');
     wrap.appendChild(d);
   }
 }
-
 // 初始化渲染
-render0to9('wDigits');
-render0to9('qDigits');
-render0to9('bDigits');
-render0to9('sDigits');
-render0to9('gDigits');
+render0to9('wDigits','w');
+render0to9('qDigits','q');
+render0to9('bDigits','b');
+render0to9('sDigits','s');
+render0to9('gDigits','g');
 render0to9('hwDigits');
 render0to27('sum3Digits');
 render0to45('sum5Digits');
@@ -171,14 +197,60 @@ render0to45('sum5Digits');
 const mapDiff5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
 const mapSum9  = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
 
-// ✅【核心修复】杀掉数字 = 添加 inactive（变白）
-function killSingleDigit(boxDomId, numVal){
-  const wrap = document.getElementById(boxDomId);
-  const target = wrap.querySelector(`.digit[data-val="${numVal}"]`);
-  if(target) target.classList.add('inactive');
+// 【核心】根据优先级渲染单个位置所有数字样式
+function renderPosStyle(posKey){
+  const meta = posMeta[posKey];
+  const domWrap = document.getElementById(posIdMap[posKey]);
+  const digits = domWrap.querySelectorAll('.digit');
+  digits.forEach(el=>{
+    const num = Number(el.dataset.val);
+    // 优先级：最低频+杀号重叠(红) > 杀号(黄) > 高频(绿) > 默认白
+    if(num === meta.lowNum && meta.killSet.has(num)){
+      el.className = "digit state-lowkill";
+    }else if(meta.killSet.has(num)){
+      el.className = "digit state-kill";
+    }else if(meta.highSet.has(num)){
+      el.className = "digit state-high";
+    }else{
+      el.className = "digit state-normal";
+    }
+  })
 }
 
-// 执行杀号主函数
+// 解析历史数据：统计分位频次，取最高8个，记录最低1个
+function calcFreqFromData(){
+  // 重置频次数据
+  ['w','q','b','s','g'].forEach(k=>{
+    posMeta[k].freq = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
+    posMeta[k].highSet.clear();
+    posMeta[k].killSet.clear();
+    posMeta[k].lowNum = null;
+  })
+  // 遍历历史开奖统计
+  rawDataList.forEach(item=>{
+    const n = item.number;
+    if(n.length!==5) return;
+    posMeta.w.freq[ Number(n[0]) ]++;
+    posMeta.q.freq[ Number(n[1]) ]++;
+    posMeta.b.freq[ Number(n[2]) ]++;
+    posMeta.s.freq[ Number(n[3]) ]++;
+    posMeta.g.freq[ Number(n[4]) ]++;
+  })
+  // 每个位置单独排序：频次从高→低
+  ['w','q','b','s','g'].forEach(k=>{
+    const freqArr = Object.entries(posMeta[k].freq).map(([v,c])=>({val:Number(v),count:c}));
+    freqArr.sort((a,b)=>b.count - a.count);
+    // 频次最高8个 → 加入highSet（绿色）
+    const top8 = freqArr.slice(0,8);
+    top8.forEach(x=>posMeta[k].highSet.add(x.val));
+    // 频次最低1个
+    freqArr.sort((a,b)=>a.count - b.count);
+    posMeta[k].lowNum = freqArr[0].val;
+    renderPosStyle(k);
+  })
+}
+
+// 执行杀号逻辑，存入killSet
 function runKillRule(num5){
   if(!num5 || num5.length!==5) return alert('请输入5位号码！');
   const w = Number(num5[0]);
@@ -188,27 +260,95 @@ function runKillRule(num5){
   const g = Number(num5[4]);
   const useD5 = document.getElementById('useDiff5').checked;
   const useS9 = document.getElementById('useSum9').checked;
+  // 清空旧杀号
+  ['w','q','b','s','g'].forEach(k=>posMeta[k].killSet.clear());
 
   if(useD5){
-    killSingleDigit('wDigits', mapDiff5[w]);
-    killSingleDigit('qDigits', mapDiff5[q]);
-    killSingleDigit('bDigits', mapDiff5[b]);
-    killSingleDigit('sDigits', mapDiff5[s]);
-    killSingleDigit('gDigits', mapDiff5[g]);
+    posMeta.w.killSet.add(mapDiff5[w]);
+    posMeta.q.killSet.add(mapDiff5[q]);
+    posMeta.b.killSet.add(mapDiff5[b]);
+    posMeta.s.killSet.add(mapDiff5[s]);
+    posMeta.g.killSet.add(mapDiff5[g]);
   }
   if(useS9){
-    killSingleDigit('wDigits', mapSum9[w]);
-    killSingleDigit('qDigits', mapSum9[q]);
-    killSingleDigit('bDigits', mapSum9[b]);
-    killSingleDigit('sDigits', mapSum9[s]);
-    killSingleDigit('gDigits', mapSum9[g]);
+    posMeta.w.killSet.add(mapSum9[w]);
+    posMeta.q.killSet.add(mapSum9[q]);
+    posMeta.b.killSet.add(mapSum9[b]);
+    posMeta.s.killSet.add(mapSum9[s]);
+    posMeta.g.killSet.add(mapSum9[g]);
   }
+  // 重绘颜色
+  ['w','q','b','s','g'].forEach(k=>renderPosStyle(k));
 }
-
-// 【执行杀号按钮点击事件】
 document.getElementById('execKillBtn').onclick = function(){
   const inputVal = document.getElementById('lastNumInput').value.trim();
   runKillRule(inputVal);
+}
+
+// ======== 生成号码相关 ========
+function getPosPool(containerId){
+  const arr = [];
+  document.querySelectorAll(`#${containerId} .digit.state-high, #${containerId} .digit.state-kill`).forEach(el=>{
+    arr.push(Number(el.dataset.val));
+  })
+  return [...new Set(arr)];
+}
+function cartesianProduct(arrList){
+  return arrList.reduce((acc, curr)=>{
+    const res = [];
+    for(let a of acc) for(let b of curr) res.push([...a,b]);
+    return res;
+  }, [[]]);
+}
+document.getElementById('genBtn').onclick = function(){
+  resultBox.innerText = "生成中...";
+  lastResultList = [];
+  const wPool = getPosPool('wDigits');
+  const qPool = getPosPool('qDigits');
+  const bPool = getPosPool('bDigits');
+  const sPool = getPosPool('sDigits');
+  const gPool = getPosPool('gDigits');
+  if(!wPool.length||!qPool.length||!bPool.length||!sPool.length||!gPool.length){
+    resultBox.innerText = "❌ 至少每个位置保留1个数字！";
+    return;
+  }
+  const useHw = document.getElementById('useHwFilter').checked;
+  const excludeHwSet = new Set();
+  document.querySelectorAll('#hwDigits .digit.state-normal').forEach(el=>excludeHwSet.add(Number(el.dataset.val)));
+  const excludeSum3Set = new Set();
+  document.querySelectorAll('#sum3Digits .digit.state-normal').forEach(el=>excludeSum3Set.add(Number(el.dataset.val)));
+  const excludeSum5Set = new Set();
+  document.querySelectorAll('#sum5Digits .digit.state-normal').forEach(el=>excludeSum5Set.add(Number(el.dataset.val)));
+  const useSpan = document.getElementById('useSpan').checked;
+  const minSpan = Number(document.getElementById('minSpan').value);
+  const maxSpan = Number(document.getElementById('maxSpan').value);
+
+  const allList = cartesianProduct([wPool,qPool,bPool,sPool,gPool]);
+  for(let d of allList){
+    const [w,q,b,s,g] = d;
+    const sum3 = w+q+b;
+    const hw = sum3 % 10;
+    const sum5 = w+q+b+s+g;
+    const span = Math.max(...d) - Math.min(...d);
+    if(useHw && excludeHwSet.has(hw)) continue;
+    if(excludeSum3Set.has(sum3)) continue;
+    if(excludeSum5Set.has(sum5)) continue;
+    if(useSpan && (span<minSpan || span>maxSpan)) continue;
+    lastResultList.push(`${w}${q}${b}${s}${g}`);
+  }
+  if(lastResultList.length === 0){
+    resultBox.innerText = "⚠️ 没有符合条件号码，请放宽筛选条件";
+  }else{
+    resultBox.innerText = `✅ 共${lastResultList.length}组\n` + lastResultList.join("\n");
+  }
+}
+document.getElementById('copyBtn').onclick = async function(){
+  if(!lastResultList.length){
+    alert("暂无结果，先生成号码！");
+    return;
+  }
+  await navigator.clipboard.writeText(lastResultList.join("\n"));
+  alert("✅ 复制成功！");
 }
 
 // 探数API拉取历史
@@ -221,7 +361,6 @@ async function fetchBatch(offset) {
   }
   return [];
 }
-// 一键获取100期
 document.getElementById('fetchBtn').onclick = async function(){
   rawDataList = [];
   const batchSize=20, total=100;
@@ -236,29 +375,27 @@ document.getElementById('fetchBtn').onclick = async function(){
   rawDataList = rawDataList.slice(0,total);
   tipBox.innerText = `✅载入${rawDataList.length}期`;
 }
-// 解析数据
+// 【解析数据按钮】核心：统计频次+自动标绿色高频8个
 document.getElementById('parseBtn').onclick = function(){
   if(!rawDataList.length) return tipBox.innerText='❌先获取历史';
-  tipBox.innerText = `✅解析${rawDataList.length}期`;
+  calcFreqFromData();
+  tipBox.innerText = `✅解析${rawDataList.length}期，自动标记频次最高8个(绿色)`;
   const last = rawDataList[0];
   if(last?.number?.length===5){
     document.getElementById('lastNumInput').value = last.number;
-    runKillRule(last.number);
   }
 }
+
 // 重置和尾
 document.getElementById('resetHw').onclick = function(){
-  document.querySelectorAll('#hwDigits .digit').forEach(d=>d.classList.remove('inactive'));
+  document.querySelectorAll('#hwDigits .digit').forEach(d=>d.className='digit state-normal');
 }
-// 清空前三位排除和值
 document.getElementById('clearSum3').onclick = function(){
-  document.querySelectorAll('#sum3Digits .digit').forEach(d=>d.classList.remove('inactive'));
+  document.querySelectorAll('#sum3Digits .digit').forEach(d=>d.className='digit state-normal');
 }
-// 清空五位排除和值
 document.getElementById('clearSum5').onclick = function(){
-  document.querySelectorAll('#sum5Digits .digit').forEach(d=>d.classList.remove('inactive'));
+  document.querySelectorAll('#sum5Digits .digit').forEach(d=>d.className='digit state-normal');
 }
-// 号码验证
 document.getElementById('verifyBtn').onclick = function(){
   const v = document.getElementById('verifyInput').value.trim();
   if(v.length!==5) return alert('必须5位数字');

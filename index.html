@@ -220,7 +220,7 @@ document.getElementById('clearAllDigit').onclick = function(){
   tipBox.innerText="✅ 数字块已全部清空重置";
 }
 
-// 解析历史数据：统计分位频次，取最高8个，记录最低1个
+// 解析历史数据：统计分位频次，取最高8个，记录最低1个【修复排序BUG】
 function calcFreqFromData(){
   console.log("开始解析历史数据，条数：",rawDataList.length);
   // 重置频次数据
@@ -240,16 +240,16 @@ function calcFreqFromData(){
     posMeta.s.freq[ Number(n[3]) ]++;
     posMeta.g.freq[ Number(n[4]) ]++;
   })
-  // 每个位置单独排序：频次从高→低
+  // 每个位置单独排序：频次从高→低【修复：分开两次排序，不再原地覆盖】
   ['w','q','b','s','g'].forEach(k=>{
     const freqArr = Object.entries(posMeta[k].freq).map(([v,c])=>({val:Number(v),count:c}));
-    freqArr.sort((a,b)=>b.count - a.count);
-    // 频次最高8个 → 加入highSet（绿色）
-    const top8 = freqArr.slice(0,8);
+    // 先复制一份，高频降序，取前8
+    const freqDesc = [...freqArr].sort((a,b)=>b.count - a.count);
+    const top8 = freqDesc.slice(0,8);
     top8.forEach(x=>posMeta[k].highSet.add(x.val));
-    // 频次最低1个
-    freqArr.sort((a,b)=>a.count - b.count);
-    posMeta[k].lowNum = freqArr[0].val;
+    // 再复制一份，升序拿最低
+    const freqAsc = [...freqArr].sort((a,b)=>a.count - b.count);
+    posMeta[k].lowNum = freqAsc[0].val;
     renderPosStyle(k);
   })
   console.log("解析完成");

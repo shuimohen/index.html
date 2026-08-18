@@ -1,18 +1,25 @@
 export async function onRequest({ request }) {
   const key = "f44a7660881514c58ed987ca5ab934f0";
   const caipiaoid = "17";
-  // ✅ num=100 拉取近100期
-  const url = `https://api2.tanshuapi.com/api/caipiao/v1/history?key=${key}&caipiaoid=${caipiaoid}&issueno=&start=0&num=100`;
-
-  const res = await fetch(url);
-  const rawText = await res.text();
-  let data;
-  try {
-    data = JSON.parse(rawText);
-  } catch (e) {
-    data = { raw: rawText, error: "JSON解析失败" };
+  let allList = [];
+  // 每次20条，循环5次凑100期
+  for (let offset = 0; offset < 100; offset += 20) {
+    const url = `https://api2.tanshuapi.com/api/caipiao/v1/history?key=${key}&caipiaoid=${caipiaoid}&issueno=&start=${offset}&num=20`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.data && Array.isArray(json.data)) {
+      allList = allList.concat(json.data);
+    }
+    // 没有更多数据提前终止
+    if (!json.data || json.data.length === 0) break;
   }
-  return new Response(JSON.stringify(data), {
+  // 最多保留100条
+  allList = allList.slice(0, 100);
+  return new Response(JSON.stringify({
+    code:1,
+    msg:"success",
+    data: allList
+  }), {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*"

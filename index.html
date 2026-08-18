@@ -66,7 +66,7 @@ h3{
   border-color: #4096ff;
   transition: all .2s;
 }
-
+/* inactive = 取消选中（杀号，变白底黑字） */
 .digit.inactive{
   background: #fff;
   color: #222;
@@ -111,105 +111,11 @@ input[type="text"]{
   margin: 8px 0;
   align-items: center;
 }
-
-.section-title{
-  margin: 14px 0 10px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #222;
-}
-
-.group-grid{
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.group-item{
-  padding: 10px 6px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  text-align: center;
-  cursor: pointer;
-  transition: .2s;
-  background: #fff;
-  color: #222;
-  font-size: 14px;
-}
-
-.group-item.active{
-  background: #27ae60;
-  color: #fff;
-  border-color: #27ae60;
-}
-
-.sub-group{
-  padding-left: 16px;
-  margin: 4px 0 12px;
-  display: block;
-}
-
-.sub-group-title{
-  margin: 10px 0 6px;
-  font-size: 14px;
-  color: #666;
-}
-
-.mini-digit-grid{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.mini-digit{
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid #dcdfe6;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  background: #4096ff;
-  color: #fff;
-  border-color: #4096ff;
-}
-
-.mini-digit.inactive{
-  background: #fff;
-  color: #222;
-  border-color: #dcdfe6;
-}
-
-.range-box{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 8px 0;
-}
-
-select, input[type="number"]{
-  padding: 8px 10px;
-  border: 1px solid #dcdfe6;
-  border-radius: 8px;
-  font-size: 15px;
-}
-
-.bottom-box{
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  background: #fafafa;
-}
 </style>
 </head>
 <body>
 
 <div class="card">
-  <h3>历史数据获取</h3>
   <div class="top-row">
     <button id="fetchBtn" class="btn">一键获取近100期排列五</button>
     <button id="parseBtn" class="btn gray">解析数据</button>
@@ -235,22 +141,18 @@ select, input[type="number"]{
     <span style="width:48px;">万位</span>
     <div class="row" id="wDigits"></div>
   </div>
-
   <div class="row">
     <span style="width:48px;">千位</span>
     <div class="row" id="qDigits"></div>
   </div>
-
   <div class="row">
     <span style="width:48px;">百位</span>
     <div class="row" id="bDigits"></div>
   </div>
-
   <div class="row">
     <span style="width:48px;">十位</span>
     <div class="row" id="sDigits"></div>
   </div>
-
   <div class="row">
     <span style="width:48px;">个位</span>
     <div class="row" id="gDigits"></div>
@@ -266,82 +168,43 @@ select, input[type="number"]{
 </div>
 
 <div class="card">
-  <h3>排序后三数范围（0-27）</h3>
-  <div class="group-grid" id="range3Group">
-    <div class="group-item" data-range="0-2">0-2</div>
-    <div class="group-item" data-range="3-5">3-5</div>
-    <div class="group-item" data-range="6-8">6-8</div>
-    <div class="group-item" data-range="9-11">9-11</div>
-    <div class="group-item" data-range="12-14">12-14</div>
-    <div class="group-item" data-range="15-17">15-17</div>
-    <div class="group-item" data-range="18-20">18-20</div>
-    <div class="group-item" data-range="21-23">21-23</div>
-    <div class="group-item" data-range="24-27">24-27</div>
-    <div class="group-item" data-range="18-27">18-27</div>
-    <div class="group-item" data-range="0-9">0-9</div>
-    <div class="group-item" data-range="10-18">10-18</div>
+  <h3>排除前三位和值（0-27）</h3>
+  <div class="row" id="sum3Digits"></div>
+  <div class="row">
+    <button class="btn gray" id="clearSum3">清空全部排除和值</button>
+    <button class="btn gray" id="resetHw">重置和尾</button>
   </div>
+</div>
 
-  <h3 class="section-title">排序后三数奇偶（0-27）</h3>
-  <div class="mini-digit-grid" id="oddEven3Group">
-    <div class="mini-digit" data-val="0">0</div>
-    <div class="mini-digit" data-val="1">1</div>
-    <div class="mini-digit" data-val="2">2</div>
-    <div class="mini-digit" data-val="3">3</div>
-    <div class="mini-digit" data-val="4">4</div>
-    <div class="mini-digit" data-val="5">5</div>
-    <div class="mini-digit" data-val="6">6</div>
-    <div class="mini-digit" data-val="7">7</div>
-    <div class="mini-digit" data-val="8">8</div>
-    <div class="mini-digit" data-val="9">9</div>
-    <div class="mini-digit" data-val="10">10</div>
-    <div class="mini-digit" data-val="11">11</div>
-    <div class="mini-digit" data-val="12">12</div>
-    <div class="mini-digit" data-val="13">13</div>
-    <div class="mini-digit" data-val="14">14</div>
-    <div class="mini-digit" data-val="15">15</div>
-    <div class="mini-digit" data-val="16">16</div>
-    <div class="mini-digit" data-val="17">17</div>
-    <div class="mini-digit" data-val="18">18</div>
-    <div class="mini-digit" data-val="19">19</div>
-    <div class="mini-digit" data-val="20">20</div>
-    <div class="mini-digit" data-val="21">21</div>
-    <div class="mini-digit" data-val="22">22</div>
-    <div class="mini-digit" data-val="23">23</div>
-    <div class="mini-digit" data-val="24">24</div>
-    <div class="mini-digit" data-val="25">25</div>
-    <div class="mini-digit" data-val="26">26</div>
-    <div class="mini-digit" data-val="27">27</div>
+<div class="card">
+  <h3>排除五位和值（0-45）</h3>
+  <div class="row" id="sum5Digits"></div>
+  <div class="row">
+    <button class="btn gray" id="clearSum5">清空全部排除五位和值</button>
   </div>
+</div>
 
-  <h3 class="section-title">排序后一数字奇偶（0-9）</h3>
-  <div class="mini-digit-grid" id="oddEven1Group">
-    <div class="mini-digit" data-val="0">0</div>
-    <div class="mini-digit" data-val="1">1</div>
-    <div class="mini-digit" data-val="2">2</div>
-    <div class="mini-digit" data-val="3">3</div>
-    <div class="mini-digit" data-val="4">4</div>
-    <div class="mini-digit" data-val="5">5</div>
-    <div class="mini-digit" data-val="6">6</div>
-    <div class="mini-digit" data-val="7">7</div>
-    <div class="mini-digit" data-val="8">8</div>
-    <div class="mini-digit" data-val="9">9</div>
+<div class="card">
+  <h3>五位跨度筛选（号码最大值-最小值，范围0~9）</h3>
+  <div class="row">
+    <span>最小跨度:</span>
+    <input type="number" id="minSpan" value="0" min="0" max="9" style="width:60px;">
+    <span>最大跨度:</span>
+    <input type="number" id="maxSpan" value="9" min="0" max="9" style="width:60px;">
+    <label><input type="checkbox" id="useSpan" checked> 启用跨度:</label>
   </div>
+</div>
 
-  <h3 class="section-title">五码两数组合（最小:0 最大:9，范围:0-9）</h3>
-  <div class="range-box">
-    <span>最小:</span>
-    <input type="number" id="minVal" value="0" min="0" max="9">
-    <span>最大:</span>
-    <input type="number" id="maxVal" value="9" min="0" max="9">
-    <label><input type="checkbox" id="enableRange"> 启用搜索:</label>
+<div class="card">
+  <div class="row">
+    <button id="genBtn" class="btn green">生成符合条件号码</button>
+    <button id="copyBtn" class="btn">复制全部结果</button>
   </div>
-
-  <div class="bottom-box">
-    <h3>号码验证</h3>
+  <div style="margin-top:12px;">
+    <h4>号码验证</h4>
     <div class="row">
       <input type="text" id="verifyInput" placeholder="输入5位号码验证">
-      <button id="verifyBtn" class="btn green">验证号码</button>
+      <button id="verifyBtn" class="btn">验证号码</button>
     </div>
   </div>
 </div>
@@ -350,10 +213,38 @@ select, input[type="number"]{
 let rawDataList = [];
 const tipBox = document.getElementById('tipBox');
 
+// 渲染0-9 默认蓝色选中
 function renderDigitBox(containerId){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = "";
   for(let i = 0; i <= 9; i++){
+    const d = document.createElement("div");
+    d.className = "digit";
+    d.innerText = i;
+    d.dataset.val = i;
+    // 点击手动切换选中/取消
+    d.onclick = () => d.classList.toggle("inactive");
+    wrap.appendChild(d);
+  }
+}
+// 渲染0~27 和值
+function renderSum3Box(containerId){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = "";
+  for(let i = 0; i <= 27; i++){
+    const d = document.createElement("div");
+    d.className = "digit";
+    d.innerText = i;
+    d.dataset.val = i;
+    d.onclick = () => d.classList.toggle("inactive");
+    wrap.appendChild(d);
+  }
+}
+// 渲染0~45 五位和值
+function renderSum5Box(containerId){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = "";
+  for(let i = 0; i <= 45; i++){
     const d = document.createElement("div");
     d.className = "digit";
     d.innerText = i;
@@ -369,21 +260,24 @@ renderDigitBox("bDigits");
 renderDigitBox("sDigits");
 renderDigitBox("gDigits");
 renderDigitBox("hwDigits");
+renderSum3Box("sum3Digits");
+renderSum5Box("sum5Digits");
 
+// 差5、和9映射表
 const mapDiff5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
-const mapSum9 = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
+const mapSum9  = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
 
-function setActive(boxId, val){
+// ✅【修复】杀号逻辑：杀掉=添加 inactive（变白）
+function killDigit(boxId, val){
   const wrap = document.getElementById(boxId);
   const item = wrap.querySelector(`.digit[data-val="${val}"]`);
   if(item){
-    item.classList.remove("inactive");
+    item.classList.add("inactive");
   }
 }
 
 function runKillByNum(numStr){
   if(!numStr || numStr.length !== 5) return;
-
   const useD5 = document.getElementById("useDiff5").checked;
   const useS9 = document.getElementById("useSum9").checked;
 
@@ -394,103 +288,82 @@ function runKillByNum(numStr){
   const g = Number(numStr[4]);
 
   if(useD5){
-    setActive("wDigits", mapDiff5[w]);
-    setActive("qDigits", mapDiff5[q]);
-    setActive("bDigits", mapDiff5[b]);
-    setActive("sDigits", mapDiff5[s]);
-    setActive("gDigits", mapDiff5[g]);
+    killDigit("wDigits", mapDiff5[w]);
+    killDigit("qDigits", mapDiff5[q]);
+    killDigit("bDigits", mapDiff5[b]);
+    killDigit("sDigits", mapDiff5[s]);
+    killDigit("gDigits", mapDiff5[g]);
   }
-
   if(useS9){
-    setActive("wDigits", mapSum9[w]);
-    setActive("qDigits", mapSum9[q]);
-    setActive("bDigits", mapSum9[b]);
-    setActive("sDigits", mapSum9[s]);
-    setActive("gDigits", mapSum9[g]);
+    killDigit("wDigits", mapSum9[w]);
+    killDigit("qDigits", mapSum9[q]);
+    killDigit("bDigits", mapSum9[b]);
+    killDigit("sDigits", mapSum9[s]);
+    killDigit("gDigits", mapSum9[g]);
   }
 }
 
+// 探数接口拉取历史
 async function fetchHistoryBatch(offset) {
   const res = await fetch(`/api/p5?offset=${offset}`);
   const ret = await res.json();
   console.log("分批原始返回：", ret);
-
   if (ret.code === 1 && ret.data && Array.isArray(ret.data.list)) {
-    const cleanList = ret.data.list.map(item => {
+    const cleanList = ret.data.list.map(item=>{
       return {
         ...item,
-        number: item.number.replace(/ /g, "")
-      };
-    });
+        number: item.number.replace(/ /g,"")
+      }
+    })
     return cleanList;
   }
-
   return [];
 }
 
+// 一键获取
 document.getElementById("fetchBtn").addEventListener("click", async function () {
   rawDataList = [];
   const batchSize = 20;
   const targetTotal = 100;
   const totalBatch = targetTotal / batchSize;
-
   for (let batch = 0; batch < totalBatch; batch++) {
     const offset = batch * batchSize;
     tipBox.innerText = `正在分批拉取：第${batch + 1}/${totalBatch}批`;
-
     const list = await fetchHistoryBatch(offset);
     if (list.length === 0) break;
-
     rawDataList = rawDataList.concat(list);
     await new Promise(resolve => setTimeout(resolve, 400));
   }
-
   rawDataList = rawDataList.slice(0, targetTotal);
   tipBox.innerText = `✅已载入${rawDataList.length}期，可点【解析数据】`;
-  console.log("合并完成数据", rawDataList);
 });
 
+// 解析数据自动填充上期并杀号
 document.getElementById("parseBtn").addEventListener("click", function () {
   if (!rawDataList || rawDataList.length === 0) {
     tipBox.innerText = "❌暂无数据，请先获取历史";
     return;
   }
-
   tipBox.innerText = `✅解析完成，共${rawDataList.length}期`;
-
   const lastItem = rawDataList[0];
-  if(lastItem && lastItem.number && lastItem.number.length === 5){
+  if(lastItem && lastItem.number && lastItem.number.length===5){
     document.getElementById("lastNumInput").value = lastItem.number;
     runKillByNum(lastItem.number);
   }
 });
 
+// 执行杀号按钮
 document.getElementById("execKillBtn").addEventListener("click", function(){
   const val = document.getElementById("lastNumInput").value.trim();
   runKillByNum(val);
 });
 
-document.querySelectorAll("#range3Group .group-item").forEach(el => {
-  el.onclick = function(){
-    this.classList.toggle("active");
-  };
-});
-
-document.querySelectorAll("#oddEven3Group .mini-digit, #oddEven1Group .mini-digit").forEach(el => {
-  el.onclick = function(){
-    this.classList.toggle("inactive");
-  };
-});
-
+// 号码验证
 document.getElementById("verifyBtn").addEventListener("click", function(){
   const val = document.getElementById("verifyInput").value.trim();
-  if(val.length !== 5){
-    alert("请输入5位号码");
-    return;
-  }
-  alert("号码已验证：" + val);
+  if(val.length !==5){alert("请输入5位排列五号码");return;}
+  alert("号码验证成功："+val);
 });
 </script>
-
 </body>
 </html>

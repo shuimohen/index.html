@@ -1,11 +1,17 @@
 export async function onRequest({ request }) {
   const key = "f44a7660881514c58ed987ca5ab934f0";
-  const caipiaoid = "17"; //排列五
-  // ✅ 重点：换成 v1/query 历史列表接口，不是 /winning
-  const url = `https://api2.tanshuapi.com/api/caipiao/v1/query?key=${key}&caipiaoid=${caipiaoid}&refernumber=100`;
+  const caipiaoid = "17";
+  // ✅ 改用 v1/history 接口，取100期
+  const url = `https://api2.tanshuapi.com/api/caipiao/v1/history?key=${key}&caipiaoid=${caipiaoid}&issueno=&start=0&num=100`;
 
   const res = await fetch(url);
-  const data = await res.json();
+  const rawText = await res.text();
+  let data;
+  try {
+    data = JSON.parse(rawText);
+  } catch (e) {
+    data = { raw: rawText, error: "JSON解析失败" };
+  }
   return new Response(JSON.stringify(data), {
     headers: {
       "Content-Type": "application/json",

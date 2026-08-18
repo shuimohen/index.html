@@ -21,16 +21,16 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
 .group-wrap{margin-top:10px;}
 /* 一级标签：前三位组六、组三 */
 .group-top1{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-/* 二级标签：组120~组5 */
+/* 二级标签：组120~组5 横向两排 */
 .group-top2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.group-tab{padding:10px;border-bottom:2px solid #eee;cursor:pointer;font-weight:500;font-size:20px;position:relative;display:flex;align-items:center;justify-content:space-between;}
+.group-tab{padding:10px;border-bottom:2px solid #eee;cursor:pointer;font-weight:500;font-size:16px;position:relative;display:flex;align-items:center;justify-content:space-between;}
 .group-tab.active{border-bottom-color:#27ae60;color:#27ae60;}
 .copy-btn{padding:4px 10px;font-size:14px;background:#27ae60;color:#fff;border-radius:6px;border:none;cursor:pointer;margin-left:8px;white-space:nowrap;}
 /* 二级区间：0-2/3-5等 */
 .sub-group{margin:6px 0 6px 12px;display:none;}
 .sub-group.open{display:block;}
-.range-row{padding:6px 0;cursor:pointer;color:#2176ff;font-size:22px;display:flex;align-items:center;justify-content:space-between;}
-.range-child{margin:4px 0 4px 24px;color:#333;font-size:20px;display:none;align-items:center;justify-content:space-between;}
+.range-row{padding:6px 0;cursor:pointer;color:#2176ff;font-size:15px;display:flex;align-items:center;justify-content:space-between;}
+.range-child{margin:4px 0 4px 24px;color:#333;font-size:14px;display:none;align-items:center;justify-content:space-between;}
 .range-child.open{display:flex;}
 .item{padding:6px 0;font-size:14px;color:#444;}
 .check-line{margin:6px 0;display:flex;align-items:center;gap:6px;}
@@ -63,7 +63,7 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
   </div>
 </div>
 
-<!-- ✅ 万千百十个模块 -->
+<!-- 万千百十个 可选号码池，点击色块切换蓝色选中，解析数据自动填充，支持手动修改 -->
 <div class="card">
   <h3>万｜千｜百｜十｜个 可选数字(点击色块切换蓝选)</h3>
   <div class="row"><b>万位</b><div id="wBox" class="row"></div></div>
@@ -97,7 +97,6 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
     </div>
   </div>
 
-  <!-- ✅ 新增：五位跨度筛选 -->
   <div class="filter-section">
     <div class="filter-title">五位跨度筛选（号码最大值-最小值，范围0~9）</div>
     <div class="row span-row">
@@ -116,15 +115,12 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
     <button class="btn" id="copyAllBtn">复制全部结果</button>
   </div>
   <div class="group-wrap">
-    <!-- 一级分组：前三位组六、前三位组三 -->
     <div class="group-top1" id="groupLevel1"></div>
-    <!-- 二级分组：组120 / 60 /30 /20 /10 /5 -->
     <div class="group-top2" id="groupLevel2"></div>
     <div id="groupContainer"></div>
   </div>
   <div class="result-box" id="resBox"></div>
 
-  <!-- 号码验证 -->
   <div class="filter-section">
     <div class="filter-title">号码验证</div>
     <div class="row">
@@ -136,12 +132,11 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
 </div>
 
 <script>
-// 全局缓存历史开奖数据
 let historyDataList = [];
-
-// 初始化0-9数字块
 const posList = ["w","q","b","s","g"];
 const posMap = {w:"万",q:"千",b:"百",s:"十",g:"个"};
+
+// 初始化0-9数字块，默认全部选中
 posList.forEach(p=>{
   const wrap = document.getElementById(p+"Box");
   for(let i=0;i<=9;i++){
@@ -164,11 +159,11 @@ function clearAllActive(){
   })
 }
 
-// ================= 差5、和9配对 =================
+// 差5、和9配对
 const pairCha5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
 const pairSum9 = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
 
-// 执行杀号计算
+// 执行杀号
 document.getElementById("calcRule").onclick = function(){
   const val = document.getElementById("lastNum").value.trim();
   if(!/^\d{5}$/.test(val)){alert("上期号码必须5位数字");return;}
@@ -192,7 +187,7 @@ document.getElementById("calcRule").onclick = function(){
   }
 }
 
-// 一键获取历史(调用CF代理接口)
+// 一键获取近100期排列五（接口地址保持 /api/p5，适配CF Pages Functions）
 document.getElementById("fetchHist").onclick = async function(){
   const tip = document.getElementById("fetchTip");
   tip.innerText="加载中…";
@@ -207,18 +202,17 @@ document.getElementById("fetchHist").onclick = async function(){
     document.getElementById("lastNum").value = latest;
     tip.innerText=`✅ 已载入${list.length}期，可点【解析数据】`;
   }catch(e){
-    tip.innerText="请求失败，请检查CF部署";
+    tip.innerText="请求失败，请检查CF Pages Functions部署";
     console.error(e);
   }
 }
 
-// ========== 【新增】解析数据按钮：按位置统计、自动勾选号码池 ==========
+// 解析数据：按万千百十个位置，自动勾选历史出现过的号码，可手动二次修改
 document.getElementById("parseHist").onclick = function(){
   if(!historyDataList || historyDataList.length===0){
     alert("请先【一键获取近100期排列五】");
     return;
   }
-  // 初始化每个位置集合
   const posSet = {
     w:new Set(),
     q:new Set(),
@@ -226,7 +220,6 @@ document.getElementById("parseHist").onclick = function(){
     s:new Set(),
     g:new Set()
   };
-  // 遍历历史开奖，收集每位出现过的数字
   historyDataList.forEach(item=>{
     const numStr = item.lottery_num.trim();
     if(!/^\d{5}$/.test(numStr)) return;
@@ -237,9 +230,8 @@ document.getElementById("parseHist").onclick = function(){
     posSet.s.add(arr[3]);
     posSet.g.add(arr[4]);
   })
-  // 清空全部，再自动点亮统计到的数字
   clearAllActive();
-  posList.forEach((p,idx)=>{
+  posList.forEach((p)=>{
     const box = document.getElementById(p+"Box");
     const blocks = box.querySelectorAll(".num-block");
     blocks.forEach(b=>{
@@ -249,10 +241,10 @@ document.getElementById("parseHist").onclick = function(){
       }
     })
   })
-  alert("✅ 解析完成！已按历史出现号码自动填充万千百十个可选池，支持手动修改");
+  alert("✅ 解析完成！已按历史开出号码自动填充万千百十个可选池，色块支持手动修改");
 }
 
-// ================= 和尾/和值排除 + 跨度筛选 =================
+// 和尾、和值初始化
 const weiList = [0,1,2,3,4,5,6,7,8,9];
 const sumList = Array.from({length:28},(v,i)=>i);
 const sum5List = Array.from({length:46},(v,i)=>i);
@@ -260,7 +252,6 @@ let selWei = new Set(weiList);
 let banSum = new Set([0,1,2,3,4,5,6,7,8,9,10]);
 let banSum5 = new Set();
 
-// 初始化和尾按钮
 const weiWrap = document.getElementById('weiWrap');
 weiList.forEach(n=>{
   let btn = document.createElement('button');
@@ -273,7 +264,6 @@ weiList.forEach(n=>{
   weiWrap.appendChild(btn);
 })
 
-// 初始化前三和值排除按钮
 const sumWrap = document.getElementById('sumWrap');
 sumList.forEach(n=>{
   let btn = document.createElement('button');
@@ -286,7 +276,6 @@ sumList.forEach(n=>{
   sumWrap.appendChild(btn);
 })
 
-// 初始化五位和值排除按钮
 const sum5Wrap = document.getElementById('sum5Wrap');
 sum5List.forEach(n=>{
   let btn = document.createElement('button');
@@ -299,25 +288,21 @@ sum5List.forEach(n=>{
   sum5Wrap.appendChild(btn);
 })
 
-// 清空排除和值
 function clearBanSum(){
   banSum.clear();
   document.querySelectorAll('#sumWrap .num-block').forEach(btn=>btn.classList.remove('active'));
 }
-// 清空排除五位和值
 function clearBanSum5(){
   banSum5.clear();
   document.querySelectorAll('#sum5Wrap .num-block').forEach(btn=>btn.classList.remove('active'));
 }
-// 重置和尾
 function resetWei(){
   selWei.clear();
   weiList.forEach(n=>selWei.add(n));
   document.querySelectorAll('#weiWrap .num-block').forEach(btn=>btn.classList.add('active'));
 }
 
-// ================= 号码形态判断 =================
-// 前三位形态
+// 号码形态判断
 function getFrontThreeType(numStr){
   const a = numStr[0], b = numStr[1], c = numStr[2];
   let cnt = {};
@@ -327,7 +312,6 @@ function getFrontThreeType(numStr){
   if(vals[0] === 2) return 'frontThree';
   return 'frontSix';
 }
-// 五位整体形态
 function getFiveGroup(numStr) {
   let cnt = {};
   for(let c of numStr) cnt[c] = (cnt[c]||0)+1;
@@ -352,37 +336,28 @@ function getFiveGroupName(key){
   }
   return map[key] || key;
 }
-
-// ✅ 新增：计算五位跨度
 function calcSpan(numStr){
   const arr = numStr.split("").map(Number);
   return Math.max(...arr) - Math.min(...arr);
 }
 
-// ================= 筛选工具 =================
-// 筛选：按万位开头区间
 function filterStartRange(arr,min,max){
   return arr.filter(x=>{
     const first = Number(x[0]);
     return first>=min && first<=max;
   })
 }
-// 筛选：精准万位数字（次次级 0开头/1开头）
 function filterStartExact(arr,target){
   return arr.filter(x=>Number(x[0])===target);
 }
-// 全局过滤：和尾/和值排除 +【跨度】
+
 function globalFilter(num){
   const sum3 = Number(num[0])+Number(num[1])+Number(num[2]);
   const sum5 = sum3 + Number(num[3])+Number(num[4]);
   const wei3 = sum3 % 10;
-  // 和尾过滤
   if(document.getElementById('weiSwitch').checked && !selWei.has(wei3)) return false;
-  // 排除前三和值
   if(banSum.has(sum3)) return false;
-  // 排除五位和值
   if(banSum5.has(sum5)) return false;
-  // ✅ 跨度筛选
   if(document.getElementById('spanSwitch').checked){
     const s = calcSpan(num);
     const minS = Number(document.getElementById('spanMin').value)||0;
@@ -392,10 +367,8 @@ function globalFilter(num){
   return true;
 }
 
-// ================= 生成号码 + 分组渲染 =================
 let allNumList = [];
 let groupData = {};
-// 一级、二级分组定义
 const level1Keys = ["frontSix","frontThree"];
 const level2Keys = ["g120","g60","g30","g20","g10","g5"];
 
@@ -408,12 +381,10 @@ document.getElementById("genBtn").onclick = function(){
     g:getSel("g"),
   };
   allNumList = [];
-  // 全量生成+全局过滤
   for(let w of pool.w)for(let q of pool.q)for(let b of pool.b)for(let s of pool.s)for(let g of pool.g){
     const num = `${w}${q}${b}${s}${g}`;
     if(globalFilter(num)) allNumList.push(num);
   }
-  // 分组初始化
   groupData = {
     frontSix:[], frontThree:[],
     g120:[],g60:[],g30:[],g20:[],g10:[],g5:[],g55:[]
@@ -426,7 +397,6 @@ document.getElementById("genBtn").onclick = function(){
     groupData[fiveType].push(n);
   })
 
-  // ========== 渲染【一级分组】前三位组六/组三 ==========
   const level1Wrap = document.getElementById("groupLevel1");
   level1Wrap.innerHTML = "";
   level1Keys.forEach(k=>{
@@ -434,14 +404,10 @@ document.getElementById("genBtn").onclick = function(){
     const tab = document.createElement("div");
     tab.className = "group-tab";
     tab.dataset.type = k;
-    tab.innerHTML = `
-      <span>${getFiveGroupName(k)} (${list.length})</span>
-      <button class="copy-btn" data-copy="${k}">一键复制</button>
-    `;
+    tab.innerHTML = `<span>${getFiveGroupName(k)} (${list.length})</span><button class="copy-btn" data-copy="${k}">一键复制</button>`;
     level1Wrap.appendChild(tab);
   })
 
-  // ========== 渲染【二级分组】组120~组5 ==========
   const level2Wrap = document.getElementById("groupLevel2");
   level2Wrap.innerHTML = "";
   level2Keys.forEach(k=>{
@@ -449,14 +415,10 @@ document.getElementById("genBtn").onclick = function(){
     const tab = document.createElement("div");
     tab.className = "group-tab";
     tab.dataset.type = k;
-    tab.innerHTML = `
-      <span>${getFiveGroupName(k)} (${list.length})</span>
-      <button class="copy-btn" data-copy="${k}">一键复制</button>
-    `;
+    tab.innerHTML = `<span>${getFiveGroupName(k)} (${list.length})</span><button class="copy-btn" data-copy="${k}">一键复制</button>`;
     level2Wrap.appendChild(tab);
   })
 
-  // ========== 渲染区间子分类（0-2/3-5开头 展开下级） ==========
   const container = document.getElementById("groupContainer");
   container.innerHTML="";
   [...level1Keys,...level2Keys].forEach(k=>{
@@ -465,7 +427,6 @@ document.getElementById("genBtn").onclick = function(){
     const html = `
     <div class="sub-group" data-root="${k}">
       <div class="subsub">
-        <!-- 0-2开头 -->
         <div class="range-row" data-key="${k}" data-min="0" data-max="2">
           <span>0-2开头【${filterStartRange(list,0,2).length}注】</span>
           <button class="copy-btn range-copy">复制</button>
@@ -474,7 +435,6 @@ document.getElementById("genBtn").onclick = function(){
         <div class="range-child" data-parent="${k}" data-exact="1"><span>1开头:【${filterStartExact(list,1).length}注】</span><button class="copy-btn child-copy">复制</button></div>
         <div class="range-child" data-parent="${k}" data-exact="2"><span>2开头:【${filterStartExact(list,2).length}注】</span><button class="copy-btn child-copy">复制</button></div>
 
-        <!-- 3-5开头 -->
         <div class="range-row" data-key="${k}" data-min="3" data-max="5">
           <span>3-5开头【${filterStartRange(list,3,5).length}注】</span>
           <button class="copy-btn range-copy">复制</button>
@@ -483,7 +443,6 @@ document.getElementById("genBtn").onclick = function(){
         <div class="range-child" data-parent="${k}" data-exact="4"><span>4开头:【${filterStartExact(list,4).length}注】</span><button class="copy-btn child-copy">复制</button></div>
         <div class="range-child" data-parent="${k}" data-exact="5"><span>5开头:【${filterStartExact(list,5).length}注】</span><button class="copy-btn child-copy">复制</button></div>
 
-        <!-- 6-8开头 -->
         <div class="range-row" data-key="${k}" data-min="6" data-max="8">
           <span>6-8开头【${filterStartRange(list,6,8).length}注】</span>
           <button class="copy-btn range-copy">复制</button>
@@ -492,7 +451,6 @@ document.getElementById("genBtn").onclick = function(){
         <div class="range-child" data-parent="${k}" data-exact="7"><span>7开头:【${filterStartExact(list,7).length}注】</span><button class="copy-btn child-copy">复制</button></div>
         <div class="range-child" data-parent="${k}" data-exact="8"><span>8开头:【${filterStartExact(list,8).length}注】</span><button class="copy-btn child-copy">复制</button></div>
 
-        <!-- 9开头 -->
         <div class="range-row" data-key="${k}" data-min="9" data-max="9">
           <span>9开头【${filterStartRange(list,9,9).length}注】</span>
           <button class="copy-btn range-copy">复制</button>
@@ -504,7 +462,7 @@ document.getElementById("genBtn").onclick = function(){
     container.insertAdjacentHTML('beforeend',html);
   })
 
-  // ===== 一级/二级标签点击 → 展开对应子区间 =====
+  // 一级、二级分组标签点击 → 绿色激活+展开下级
   document.querySelectorAll(".group-tab").forEach(tab=>{
     tab.onclick = function(){
       const typeKey = this.dataset.type;
@@ -515,7 +473,7 @@ document.getElementById("genBtn").onclick = function(){
     }
   })
 
-  // ===== 点击0-2开头这一行 → 展开收起它下面所有子项 =====
+  // 区间行点击展开次次级
   document.querySelectorAll(".range-row").forEach(row=>{
     row.onclick=function(){
       const key = this.dataset.key;
@@ -529,7 +487,6 @@ document.getElementById("genBtn").onclick = function(){
     }
   })
 
-  // ===== 区间复制按钮（0-2开头复制） =====
   document.querySelectorAll(".range-copy").forEach(btn=>{
     btn.onclick=function(e){
       e.stopPropagation();
@@ -542,8 +499,6 @@ document.getElementById("genBtn").onclick = function(){
       navigator.clipboard.writeText(targetList.join("\n")).then(()=>alert(`✅ 已复制${targetList.length}条`));
     }
   })
-
-  // ===== 子项复制按钮（0开头 /1开头 复制） =====
   document.querySelectorAll(".child-copy").forEach(btn=>{
     btn.onclick=function(e){
       e.stopPropagation();
@@ -555,8 +510,6 @@ document.getElementById("genBtn").onclick = function(){
       navigator.clipboard.writeText(targetList.join("\n")).then(()=>alert(`✅ 已复制${targetList.length}条号码`));
     }
   })
-
-  // ===== 顶层分组一键复制（前三位组六、组三、组120等） =====
   document.querySelectorAll(".copy-btn[data-copy]").forEach(btn=>{
     btn.onclick=function(e){
       e.stopPropagation();
@@ -565,17 +518,14 @@ document.getElementById("genBtn").onclick = function(){
       navigator.clipboard.writeText(list.join("\n")).then(()=>alert(`✅ 已复制${list.length}条号码`));
     }
   })
-
   document.getElementById("resBox").innerText = `合计生成:${allNumList.length} 注`;
 }
 
-// ================= 复制全部结果 =================
 document.getElementById("copyAllBtn").onclick = function(){
   if(allNumList.length===0){alert("暂无结果");return;}
   navigator.clipboard.writeText(allNumList.join("\n")).then(()=>alert(`✅ 已复制全部${allNumList.length}条号码`));
 }
 
-// ================= 号码验证功能 =================
 document.getElementById("checkNumBtn").onclick = function(){
   const input = document.getElementById("checkNumInput").value.trim();
   const tip = document.getElementById("checkTip");

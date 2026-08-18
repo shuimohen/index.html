@@ -1,16 +1,17 @@
-export async function onRequest({ request }) {
+export async function onRequestGet({ request }) {
   const key = "f44a7660881514c58ed987ca5ab934f0";
   const caipiaoid = "17";
-  // ✅ num=100 拉取近100期
-  const url = `https://api2.tanshuapi.com/api/caipiao/v1/history?key=${key}&caipiaoid=${caipiaoid}&issueno=&start=0&num=100`;
-
-  const res = await fetch(url);
+  const urlObj = new URL(request.url);
+  const offset = urlObj.searchParams.get("offset") || 0;
+  const targetUrl = `https://api2.tanshuapi.com/api/caipiao/v1/history?key=${key}&caipiaoid=${caipiaoid}&issueno=&start=${offset}&num=20`;
+  
+  const res = await fetch(targetUrl);
   const rawText = await res.text();
   let data;
   try {
     data = JSON.parse(rawText);
   } catch (e) {
-    data = { raw: rawText, error: "JSON解析失败" };
+    data = { error: "JSON解析失败", raw: rawText };
   }
   return new Response(JSON.stringify(data), {
     headers: {

@@ -7,38 +7,222 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>排列五号码统计筛选极速工具</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,system-ui,Segoe UI,sans-serif;}
-body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px #00000012;}
-.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
-.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;cursor:pointer;font-weight:600;background:#fff;transition:all .2s;}
-.digit.active{background:#4096ff;color:#fff;border-color:#4096ff;}
-.btn{padding:10px 16px;border:none;border-radius:8px;background:#4096ff;color:#fff;cursor:pointer;font-size:15px;}
-.btn.gray{background:#909399;}
-.tip{margin:8px 0;color:#333;font-weight:500;}
-.group-wrap{margin-top:10px;}
-.group-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;}
-.group-item{padding:8px 10px;border:1px solid #ddd;border-radius:8px;cursor:pointer;transition:.2s;border-bottom:2px solid transparent;}
-.group-item.active{border-bottom-color:#27ae60;color:#27ae60;font-weight:bold;}
-.sub-group{padding-left:16px;margin:4px 0;display:none;}
-.sub-group.open{display:block;}
-input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;font-size:15px;width:260px;}
+*{
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, system-ui, Segoe UI, sans-serif;
+}
+
+body{
+  background: #f0f2f5;
+  padding: 12px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.card{
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
+h3{
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+}
+
+.row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+  align-items: center;
+}
+
+.top-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.digit{
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #dcdfe6;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  background: #4096ff;
+  color: #fff;
+  border-color: #4096ff;
+  transition: all .2s;
+}
+
+.digit.inactive{
+  background: #fff;
+  color: #222;
+  border-color: #dcdfe6;
+}
+
+.btn{
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #4096ff;
+  color: #fff;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.btn.gray{
+  background: #909399;
+}
+
+.btn.green{
+  background: #67c23a;
+}
+
+.tip{
+  margin: 8px 0;
+  color: #333;
+  font-weight: 500;
+}
+
+input[type="text"]{
+  padding: 9px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  font-size: 15px;
+  width: 260px;
+}
+
+.check-row{
+  display: flex;
+  gap: 18px;
+  margin: 8px 0;
+  align-items: center;
+}
+
+.section-title{
+  margin: 14px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+}
+
+.group-grid{
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.group-item{
+  padding: 10px 6px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: .2s;
+  background: #fff;
+  color: #222;
+  font-size: 14px;
+}
+
+.group-item.active{
+  background: #27ae60;
+  color: #fff;
+  border-color: #27ae60;
+}
+
+.sub-group{
+  padding-left: 16px;
+  margin: 4px 0 12px;
+  display: block;
+}
+
+.sub-group-title{
+  margin: 10px 0 6px;
+  font-size: 14px;
+  color: #666;
+}
+
+.mini-digit-grid{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mini-digit{
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #dcdfe6;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  background: #4096ff;
+  color: #fff;
+  border-color: #4096ff;
+}
+
+.mini-digit.inactive{
+  background: #fff;
+  color: #222;
+  border-color: #dcdfe6;
+}
+
+.range-box{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+select, input[type="number"]{
+  padding: 8px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.bottom-box{
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+}
 </style>
 </head>
 <body>
+
 <div class="card">
   <h3>历史数据获取</h3>
-  <div class="row">
+  <div class="top-row">
     <button id="fetchBtn" class="btn">一键获取近100期排列五</button>
     <button id="parseBtn" class="btn gray">解析数据</button>
     <span id="tipBox">无数据</span>
   </div>
-  <div class="row" style="margin-top:12px;">
+
+  <div class="top-row">
     <span>上期开奖(5位):</span>
     <input type="text" id="lastNumInput" placeholder="如01490">
     <button id="execKillBtn" class="btn">执行差5/和9杀号</button>
   </div>
-  <div class="row" style="margin-top:8px;">
+
+  <div class="check-row">
     <label><input type="checkbox" id="useDiff5" checked> 启用【差5恒值杀号】</label>
     <label><input type="checkbox" id="useSum9" checked> 启用【和9恒值杀号】</label>
   </div>
@@ -46,50 +230,119 @@ input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;f
 
 <div class="card">
   <h3>万 | 千 | 百 | 十 | 个 可选数字(点击色块切换蓝选)</h3>
-  <div style="margin-top:12px;">
-    <div class="row">
-      <span style="width:40px;">万位</span>
-      <div class="row" id="wDigits"></div>
-    </div>
-    <div class="row">
-      <span style="width:40px;">千位</span>
-      <div class="row" id="qDigits"></div>
-    </div>
-    <div class="row">
-      <span style="width:40px;">百位</span>
-      <div class="row" id="bDigits"></div>
-    </div>
-    <div class="row">
-      <span style="width:40px;">十位</span>
-      <div class="row" id="sDigits"></div>
-    </div>
-    <div class="row">
-      <span style="width:40px;">个位</span>
-      <div class="row" id="gDigits"></div>
-    </div>
+
+  <div class="row">
+    <span style="width:48px;">万位</span>
+    <div class="row" id="wDigits"></div>
+  </div>
+
+  <div class="row">
+    <span style="width:48px;">千位</span>
+    <div class="row" id="qDigits"></div>
+  </div>
+
+  <div class="row">
+    <span style="width:48px;">百位</span>
+    <div class="row" id="bDigits"></div>
+  </div>
+
+  <div class="row">
+    <span style="width:48px;">十位</span>
+    <div class="row" id="sDigits"></div>
+  </div>
+
+  <div class="row">
+    <span style="width:48px;">个位</span>
+    <div class="row" id="gDigits"></div>
   </div>
 </div>
 
 <div class="card">
   <h3>和尾过滤（前三位和尾）</h3>
   <div class="row" id="hwDigits"></div>
-  <div class="row" style="margin-top:8px;">
+  <div class="check-row">
     <label><input type="checkbox" id="useHwFilter" checked> 启用筛选:</label>
   </div>
 </div>
 
 <div class="card">
-  <h3>分组筛选</h3>
-  <div class="group-wrap" id="mainGroup">
-    <div class="group-row">
-      <div class="group-item" data-type="120">组120</div>
-      <div class="group-item" data-type="60">组60</div>
-      <div class="group-item" data-type="30">组30</div>
-      <div class="group-item" data-type="20">组20</div>
-      <div class="group-item" data-type="10">组10</div>
-      <div class="group-item" data-type="5">组5</div>
+  <h3>排序后三数范围（0-27）</h3>
+  <div class="group-grid" id="range3Group">
+    <div class="group-item" data-range="0-2">0-2</div>
+    <div class="group-item" data-range="3-5">3-5</div>
+    <div class="group-item" data-range="6-8">6-8</div>
+    <div class="group-item" data-range="9-11">9-11</div>
+    <div class="group-item" data-range="12-14">12-14</div>
+    <div class="group-item" data-range="15-17">15-17</div>
+    <div class="group-item" data-range="18-20">18-20</div>
+    <div class="group-item" data-range="21-23">21-23</div>
+    <div class="group-item" data-range="24-27">24-27</div>
+    <div class="group-item" data-range="18-27">18-27</div>
+    <div class="group-item" data-range="0-9">0-9</div>
+    <div class="group-item" data-range="10-18">10-18</div>
+  </div>
+
+  <h3 class="section-title">排序后三数奇偶（0-27）</h3>
+  <div class="mini-digit-grid" id="oddEven3Group">
+    <div class="mini-digit" data-val="0">0</div>
+    <div class="mini-digit" data-val="1">1</div>
+    <div class="mini-digit" data-val="2">2</div>
+    <div class="mini-digit" data-val="3">3</div>
+    <div class="mini-digit" data-val="4">4</div>
+    <div class="mini-digit" data-val="5">5</div>
+    <div class="mini-digit" data-val="6">6</div>
+    <div class="mini-digit" data-val="7">7</div>
+    <div class="mini-digit" data-val="8">8</div>
+    <div class="mini-digit" data-val="9">9</div>
+    <div class="mini-digit" data-val="10">10</div>
+    <div class="mini-digit" data-val="11">11</div>
+    <div class="mini-digit" data-val="12">12</div>
+    <div class="mini-digit" data-val="13">13</div>
+    <div class="mini-digit" data-val="14">14</div>
+    <div class="mini-digit" data-val="15">15</div>
+    <div class="mini-digit" data-val="16">16</div>
+    <div class="mini-digit" data-val="17">17</div>
+    <div class="mini-digit" data-val="18">18</div>
+    <div class="mini-digit" data-val="19">19</div>
+    <div class="mini-digit" data-val="20">20</div>
+    <div class="mini-digit" data-val="21">21</div>
+    <div class="mini-digit" data-val="22">22</div>
+    <div class="mini-digit" data-val="23">23</div>
+    <div class="mini-digit" data-val="24">24</div>
+    <div class="mini-digit" data-val="25">25</div>
+    <div class="mini-digit" data-val="26">26</div>
+    <div class="mini-digit" data-val="27">27</div>
+  </div>
+
+  <h3 class="section-title">排序后一数字奇偶（0-9）</h3>
+  <div class="mini-digit-grid" id="oddEven1Group">
+    <div class="mini-digit" data-val="0">0</div>
+    <div class="mini-digit" data-val="1">1</div>
+    <div class="mini-digit" data-val="2">2</div>
+    <div class="mini-digit" data-val="3">3</div>
+    <div class="mini-digit" data-val="4">4</div>
+    <div class="mini-digit" data-val="5">5</div>
+    <div class="mini-digit" data-val="6">6</div>
+    <div class="mini-digit" data-val="7">7</div>
+    <div class="mini-digit" data-val="8">8</div>
+    <div class="mini-digit" data-val="9">9</div>
+  </div>
+
+  <h3 class="section-title">五码两数组合（最小:0 最大:9，范围:0-9）</h3>
+  <div class="range-box">
+    <span>最小:</span>
+    <input type="number" id="minVal" value="0" min="0" max="9">
+    <span>最大:</span>
+    <input type="number" id="maxVal" value="9" min="0" max="9">
+    <label><input type="checkbox" id="enableRange"> 启用搜索:</label>
+  </div>
+
+  <div class="bottom-box">
+    <h3>号码验证</h3>
+    <div class="row">
+      <input type="text" id="verifyInput" placeholder="输入5位号码验证">
+      <button id="verifyBtn" class="btn green">验证号码</button>
     </div>
-    <div class="sub-group" id="subWrap"></div>
   </div>
 </div>
 
@@ -97,19 +350,19 @@ input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;f
 let rawDataList = [];
 const tipBox = document.getElementById('tipBox');
 
-// 渲染0-9数字块
 function renderDigitBox(containerId){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = "";
-  for(let i=0;i<=9;i++){
+  for(let i = 0; i <= 9; i++){
     const d = document.createElement("div");
-    d.className = "digit active";
+    d.className = "digit";
     d.innerText = i;
     d.dataset.val = i;
-    d.onclick = ()=>d.classList.toggle("active");
+    d.onclick = () => d.classList.toggle("inactive");
     wrap.appendChild(d);
   }
 }
+
 renderDigitBox("wDigits");
 renderDigitBox("qDigits");
 renderDigitBox("bDigits");
@@ -117,30 +370,29 @@ renderDigitBox("sDigits");
 renderDigitBox("gDigits");
 renderDigitBox("hwDigits");
 
-// 差5、和9映射表
 const mapDiff5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
-const mapSum9  = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
+const mapSum9 = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
 
-// 设置色块选中
 function setActive(boxId, val){
   const wrap = document.getElementById(boxId);
   const item = wrap.querySelector(`.digit[data-val="${val}"]`);
-  if(item) item.classList.add("active");
+  if(item){
+    item.classList.remove("inactive");
+  }
 }
 
-// 杀号核心计算
 function runKillByNum(numStr){
-  if(!numStr || numStr.length!==5) return;
-  // 清空所有自动杀号选中（保留手动点击的逻辑，这里是自动规则标记）
+  if(!numStr || numStr.length !== 5) return;
+
   const useD5 = document.getElementById("useDiff5").checked;
   const useS9 = document.getElementById("useSum9").checked;
-  // 先清空自动标记（手动点击不受清除干扰）
+
   const w = Number(numStr[0]);
   const q = Number(numStr[1]);
   const b = Number(numStr[2]);
   const s = Number(numStr[3]);
   const g = Number(numStr[4]);
-  // 只清除规则生成的杀号，重新渲染
+
   if(useD5){
     setActive("wDigits", mapDiff5[w]);
     setActive("qDigits", mapDiff5[q]);
@@ -148,6 +400,7 @@ function runKillByNum(numStr){
     setActive("sDigits", mapDiff5[s]);
     setActive("gDigits", mapDiff5[g]);
   }
+
   if(useS9){
     setActive("wDigits", mapSum9[w]);
     setActive("qDigits", mapSum9[q]);
@@ -157,87 +410,87 @@ function runKillByNum(numStr){
   }
 }
 
-// 【重点修复】分批拉取历史，适配探数接口 ret.data.list
 async function fetchHistoryBatch(offset) {
   const res = await fetch(`/api/p5?offset=${offset}`);
   const ret = await res.json();
   console.log("分批原始返回：", ret);
+
   if (ret.code === 1 && ret.data && Array.isArray(ret.data.list)) {
-    // 清除号码中间空格 "0 1 4 9 0" → "01490"
-    const cleanList = ret.data.list.map(item=>{
+    const cleanList = ret.data.list.map(item => {
       return {
         ...item,
-        number: item.number.replace(/ /g,"")
-      }
-    })
+        number: item.number.replace(/ /g, "")
+      };
+    });
     return cleanList;
   }
+
   return [];
 }
 
-// 一键获取按钮
 document.getElementById("fetchBtn").addEventListener("click", async function () {
   rawDataList = [];
   const batchSize = 20;
   const targetTotal = 100;
   const totalBatch = targetTotal / batchSize;
+
   for (let batch = 0; batch < totalBatch; batch++) {
     const offset = batch * batchSize;
     tipBox.innerText = `正在分批拉取：第${batch + 1}/${totalBatch}批`;
+
     const list = await fetchHistoryBatch(offset);
     if (list.length === 0) break;
+
     rawDataList = rawDataList.concat(list);
     await new Promise(resolve => setTimeout(resolve, 400));
   }
+
   rawDataList = rawDataList.slice(0, targetTotal);
   tipBox.innerText = `✅已载入${rawDataList.length}期，可点【解析数据】`;
-  console.log("合并完成数据",rawDataList);
+  console.log("合并完成数据", rawDataList);
 });
 
-// 解析数据按钮（自动提取上期开奖并执行杀号）
 document.getElementById("parseBtn").addEventListener("click", function () {
   if (!rawDataList || rawDataList.length === 0) {
     tipBox.innerText = "❌暂无数据，请先获取历史";
     return;
   }
+
   tipBox.innerText = `✅解析完成，共${rawDataList.length}期`;
+
   const lastItem = rawDataList[0];
-  if(lastItem && lastItem.number && lastItem.number.length===5){
+  if(lastItem && lastItem.number && lastItem.number.length === 5){
     document.getElementById("lastNumInput").value = lastItem.number;
     runKillByNum(lastItem.number);
   }
 });
 
-// 手动输入上期开奖，执行杀号按钮
 document.getElementById("execKillBtn").addEventListener("click", function(){
   const val = document.getElementById("lastNumInput").value.trim();
   runKillByNum(val);
 });
 
-// 分组展开逻辑（原版多级展开）
-const mainItems = document.querySelectorAll(".group-item[data-type]");
-const subWrap = document.getElementById("subWrap");
-const subOpt = [
-  {name:"0-2开头",children:["0开头","1开头","2开头"]},
-  {name:"3-5开头",children:["3开头","4开头","5开头"]},
-  {name:"6-8开头",children:["6开头","7开头","8开头"]},
-  {name:"9开头",children:["9开头"]},
-];
-mainItems.forEach(el=>{
+document.querySelectorAll("#range3Group .group-item").forEach(el => {
   el.onclick = function(){
-    mainItems.forEach(i=>i.classList.remove("active"));
-    this.classList.add("active");
-    subWrap.classList.add("open");
-    let html = "";
-    subOpt.forEach(gg=>{
-      html += `<div class="group-item">${gg.name}</div>`;
-      gg.children.forEach(c=>{
-        html += `<div class="sub-group open group-item" style="margin-left:14px">${c}</div>`;
-      })
-    })
-    subWrap.innerHTML = html;
+    this.classList.toggle("active");
+  };
+});
+
+document.querySelectorAll("#oddEven3Group .mini-digit, #oddEven1Group .mini-digit").forEach(el => {
+  el.onclick = function(){
+    this.classList.toggle("inactive");
+  };
+});
+
+document.getElementById("verifyBtn").addEventListener("click", function(){
+  const val = document.getElementById("verifyInput").value.trim();
+  if(val.length !== 5){
+    alert("请输入5位号码");
+    return;
   }
-})
+  alert("号码已验证：" + val);
+});
 </script>
+
 </body>
 </html>

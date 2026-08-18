@@ -12,16 +12,17 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
 /* 基础数字块 */
-.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;cursor:pointer;font-weight:600;transition:all .2s;color:#222;}
+.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;font-weight:600;transition:all .2s;color:#222;}
 /* 4种状态 */
 .digit.state-normal{background:#fff;}          /* 未选 白色 */
 .digit.state-high{background:#67c23a;color:#fff;} /* 频次最高8个 绿色 */
 .digit.state-kill{background:#ffd166;color:#222;}/* 杀号 黄色 */
 .digit.state-lowkill{background:#f56c6c;color:#fff;}/* 最低频+杀号重叠 红色 最高优先级 */
 
-.btn{padding:10px 16px;border:none;border-radius:8px;background:#4096ff;color:#fff;cursor:pointer;font-size:15px;}
+.btn{padding:10px 16px;border:none;border-radius:8px;background:#4096ff;color:#fff;cursor:pointer;font-size:15px;touch-action:manipulation;}
 .btn.gray{background:#909399;}
 .btn.green{background:#67c23a;}
+.btn.warn{background:#ee6a50;}
 .tip{margin:8px;color:#333;font-weight:500;}
 input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;font-size:15px;width:260px;}
 input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;width:60px;font-size:15px;}
@@ -33,6 +34,7 @@ input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;
   <div class="row">
     <button id="fetchBtn" class="btn">一键获取近100期排列五</button>
     <button id="parseBtn" class="btn gray">解析数据</button>
+    <button id="clearAllDigit" class="btn warn">一键清空数字块</button>
     <span id="tipBox" class="tip">无数据</span>
   </div>
   <div class="row">
@@ -47,7 +49,7 @@ input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;
 </div>
 
 <div class="card">
-  <div>万 | 千 | 百 | 十 | 个 可选数字(点击色块手动切换)</div>
+  <div>万 | 千 | 百 | 十 | 个 可选数字</div>
   <div class="row">
     <span style="width:44px;">万位</span>
     <div class="row" id="wDigits"></div>
@@ -136,7 +138,7 @@ const tipBox = document.getElementById('tipBox');
 const resultBox = document.getElementById('resultBox');
 const posIdMap = {w:"wDigits",q:"qDigits",b:"bDigits",s:"sDigits",g:"gDigits"};
 
-// 渲染0-9数字块，绑定点击手动修改状态
+// 渲染0-9数字块【显示数字，移除单机切换】
 function render0to9(containerId, posKey){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = '';
@@ -145,17 +147,7 @@ function render0to9(containerId, posKey){
     d.className = 'digit state-normal';
     d.dataset.val = i;
     d.dataset.pos = posKey;
-    // 手动点击切换，可覆盖自动规则
-    d.onclick = function(){
-      if(this.classList.contains("state-high")){
-        this.className = "digit state-normal";
-        posMeta[posKey].highSet.delete(Number(this.dataset.val));
-      }else{
-        this.className = "digit state-high";
-        posMeta[posKey].highSet.add(Number(this.dataset.val));
-      }
-      renderPosStyle(posKey);
-    }
+    d.innerText = i; // 显示0~9数字
     wrap.appendChild(d);
   }
 }
@@ -217,8 +209,20 @@ function renderPosStyle(posKey){
   })
 }
 
+// 一键清空所有万/千/百/十/个位数字块
+document.getElementById('clearAllDigit').onclick = function(){
+  ['w','q','b','s','g'].forEach(k=>{
+    posMeta[k].highSet.clear();
+    posMeta[k].killSet.clear();
+    posMeta[k].lowNum = null;
+    renderPosStyle(k);
+  })
+  tipBox.innerText="✅ 数字块已全部清空重置";
+}
+
 // 解析历史数据：统计分位频次，取最高8个，记录最低1个
 function calcFreqFromData(){
+  console.log("开始解析历史数据，条数：",rawDataList.length);
   // 重置频次数据
   ['w','q','b','s','g'].forEach(k=>{
     posMeta[k].freq = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
@@ -248,6 +252,7 @@ function calcFreqFromData(){
     posMeta[k].lowNum = freqArr[0].val;
     renderPosStyle(k);
   })
+  console.log("解析完成");
 }
 
 // 执行杀号逻辑，存入killSet
@@ -285,10 +290,10 @@ document.getElementById('execKillBtn').onclick = function(){
   runKillRule(inputVal);
 }
 
-// ======== 生成号码相关 ========
+// ======== 生成号码相关【只取绿色高频作为可选池】 ========
 function getPosPool(containerId){
   const arr = [];
-  document.querySelectorAll(`#${containerId} .digit.state-high, #${containerId} .digit.state-kill`).forEach(el=>{
+  document.querySelectorAll(`#${containerId} .digit.state-high`).forEach(el=>{
     arr.push(Number(el.dataset.val));
   })
   return [...new Set(arr)];
@@ -309,7 +314,7 @@ document.getElementById('genBtn').onclick = function(){
   const sPool = getPosPool('sDigits');
   const gPool = getPosPool('gDigits');
   if(!wPool.length||!qPool.length||!bPool.length||!sPool.length||!gPool.length){
-    resultBox.innerText = "❌ 至少每个位置保留1个数字！";
+    resultBox.innerText = "❌ 至少每个位置保留1个绿色可选数字！";
     return;
   }
   const useHw = document.getElementById('useHwFilter').checked;
@@ -375,9 +380,13 @@ document.getElementById('fetchBtn').onclick = async function(){
   rawDataList = rawDataList.slice(0,total);
   tipBox.innerText = `✅载入${rawDataList.length}期`;
 }
-// 【解析数据按钮】核心：统计频次+自动标绿色高频8个
+// 【解析数据按钮】
 document.getElementById('parseBtn').onclick = function(){
-  if(!rawDataList.length) return tipBox.innerText='❌先获取历史';
+  console.log("点击解析按钮");
+  if(!rawDataList || rawDataList.length ===0){
+    tipBox.innerText='❌请先【一键获取近100期排列五】';
+    return;
+  }
   calcFreqFromData();
   tipBox.innerText = `✅解析${rawDataList.length}期，自动标记频次最高8个(绿色)`;
   const last = rawDataList[0];

@@ -11,19 +11,18 @@
 body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px #00000012;}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
-.num-block{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;cursor:pointer;font-weight:600;background:#fff;transition:all .2s;}
-.num-block.active{background:#4096ff;color:#fff;border-color:#4096ff;}
+.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;cursor:pointer;font-weight:600;background:#fff;transition:all .2s;}
+.digit.active{background:#4096ff;color:#fff;border-color:#4096ff;}
 .btn{padding:10px 16px;border:none;border-radius:8px;background:#4096ff;color:#fff;cursor:pointer;font-size:15px;}
 .btn.gray{background:#909399;}
 .tip{margin:8px 0;color:#333;font-weight:500;}
 .group-wrap{margin-top:10px;}
-/* 原版：组120/60横向两排 */
 .group-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;}
 .group-item{padding:8px 10px;border:1px solid #ddd;border-radius:8px;cursor:pointer;transition:.2s;border-bottom:2px solid transparent;}
-/* 点击后绿色下划线（你原来要求） */
 .group-item.active{border-bottom-color:#27ae60;color:#27ae60;font-weight:bold;}
 .sub-group{padding-left:16px;margin:4px 0;display:none;}
 .sub-group.open{display:block;}
+input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;font-size:15px;width:260px;}
 </style>
 </head>
 <body>
@@ -32,22 +31,50 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
   <div class="row">
     <button id="fetchBtn" class="btn">一键获取近100期排列五</button>
     <button id="parseBtn" class="btn gray">解析数据</button>
+    <span id="tipBox">无数据</span>
   </div>
-  <div class="tip" id="tipBox">等待获取数据</div>
+  <div class="row" style="margin-top:12px;">
+    <span>上期开奖(5位):</span>
+    <input type="text" id="lastNumInput" placeholder="如01490">
+    <button id="execKillBtn" class="btn">执行差5/和9杀号</button>
+  </div>
+  <div class="row" style="margin-top:8px;">
+    <label><input type="checkbox" id="useDiff5" checked> 启用【差5恒值杀号】</label>
+    <label><input type="checkbox" id="useSum9" checked> 启用【和9恒值杀号】</label>
+  </div>
 </div>
 
 <div class="card">
-  <h3>杀号方案（两套独立）</h3>
-  <div class="row">
-    <label><input type="checkbox" id="useDiff5"> 启用差5恒值杀号</label>
-    <label><input type="checkbox" id="useSum9"> 启用和9恒值杀号</label>
-  </div>
+  <h3>万 | 千 | 百 | 十 | 个 可选数字(点击色块切换蓝选)</h3>
   <div style="margin-top:12px;">
-    <div>万位：<div class="row" id="wBox"></div></div>
-    <div>千位：<div class="row" id="qBox"></div></div>
-    <div>百位：<div class="row" id="bBox"></div></div>
-    <div>十位：<div class="row" id="sBox"></div></div>
-    <div>个位：<div class="row" id="gBox"></div></div>
+    <div class="row">
+      <span style="width:40px;">万位</span>
+      <div class="row" id="wDigits"></div>
+    </div>
+    <div class="row">
+      <span style="width:40px;">千位</span>
+      <div class="row" id="qDigits"></div>
+    </div>
+    <div class="row">
+      <span style="width:40px;">百位</span>
+      <div class="row" id="bDigits"></div>
+    </div>
+    <div class="row">
+      <span style="width:40px;">十位</span>
+      <div class="row" id="sDigits"></div>
+    </div>
+    <div class="row">
+      <span style="width:40px;">个位</span>
+      <div class="row" id="gDigits"></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>和尾过滤（前三位和尾）</h3>
+  <div class="row" id="hwDigits"></div>
+  <div class="row" style="margin-top:8px;">
+    <label><input type="checkbox" id="useHwFilter" checked> 启用筛选:</label>
   </div>
 </div>
 
@@ -67,125 +94,127 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 </div>
 
 <script>
-// ========== 全局变量（完全沿用原有逻辑） ==========
 let rawDataList = [];
-let tipText = "等待获取数据";
 const tipBox = document.getElementById('tipBox');
-const fetchBtn = document.getElementById('fetchBtn');
-const parseBtn = document.getElementById('parseBtn');
 
-function renderTip(){
-  tipBox.innerText = tipText;
-}
-renderTip();
-
-// ==========【方案B 前端分批拉取｜保留原版所有其他逻辑】==========
-fetchBtn.onclick = async function(){
-  rawDataList = [];
-  const batchSize = 20;
-  const targetTotal = 100;
-  const totalBatch = targetTotal / batchSize;
-  for(let batch=0; batch < totalBatch; batch++){
-    tipText = `⏳ 正在分批拉取：第${batch+1}/${totalBatch}批`;
-    renderTip();
-    try{
-      // 调用Pages Function，带offset分页参数
-      const res = await fetch(`/api/p5?offset=${batch*batchSize}`);
-      if(!res.ok){
-        tipText = `❌ 第${batch+1}批接口返回异常`;
-        renderTip();
-        return;
-      }
-      const ret = await res.json();
-      // 兼容探数标准返回结构
-      if(ret.code === 1 && ret.data && Array.isArray(ret.data) && ret.data.length>0){
-        rawDataList = rawDataList.concat(ret.data);
-      }else{
-        break;
-      }
-    }catch(err){
-      tipText = `❌ 第${batch+1}批拉取异常:${err.message}`;
-      renderTip();
-      return;
-    }
-    await new Promise(resolve=>setTimeout(resolve,400));
-  }
-  rawDataList = rawDataList.slice(0, targetTotal);
-  tipText = `✅ 已载入${rawDataList.length}期，可点【解析数据】`;
-  renderTip();
-}
-
-parseBtn.onclick = function(){
-  if(!rawDataList || rawDataList.length===0){
-    tipText = "❌ 暂无数据，请先获取历史";
-    renderTip();
-    return;
-  }
-  tipText = "✅ 解析完成，已生成频次与杀号";
-  renderTip();
-  calcFilter(rawDataList);
-}
-
-// 生成0-9数字块（点击变蓝，原版逻辑不变）
-function renderNumBox(containerId){
+// 渲染0-9数字块
+function renderDigitBox(containerId){
   const wrap = document.getElementById(containerId);
   wrap.innerHTML = "";
   for(let i=0;i<=9;i++){
     const d = document.createElement("div");
-    d.className = "num-block";
+    d.className = "digit active";
     d.innerText = i;
     d.dataset.val = i;
     d.onclick = ()=>d.classList.toggle("active");
     wrap.appendChild(d);
   }
 }
-renderNumBox("wBox");
-renderNumBox("qBox");
-renderNumBox("bBox");
-renderNumBox("sBox");
-renderNumBox("gBox");
+renderDigitBox("wDigits");
+renderDigitBox("qDigits");
+renderDigitBox("bDigits");
+renderDigitBox("sDigits");
+renderDigitBox("gDigits");
+renderDigitBox("hwDigits");
 
-// 差5 / 和9 配对规则（原样保留）
+// 差5、和9映射表
 const mapDiff5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
 const mapSum9  = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
 
-function calcFilter(list){
-  const last = list[0];
-  if(!last || !last.number) return;
-  const numStr = last.number;
+// 设置色块选中
+function setActive(boxId, val){
+  const wrap = document.getElementById(boxId);
+  const item = wrap.querySelector(`.digit[data-val="${val}"]`);
+  if(item) item.classList.add("active");
+}
+
+// 杀号核心计算
+function runKillByNum(numStr){
+  if(!numStr || numStr.length!==5) return;
+  // 清空所有自动杀号选中（保留手动点击的逻辑，这里是自动规则标记）
+  const useD5 = document.getElementById("useDiff5").checked;
+  const useS9 = document.getElementById("useSum9").checked;
+  // 先清空自动标记（手动点击不受清除干扰）
   const w = Number(numStr[0]);
   const q = Number(numStr[1]);
   const b = Number(numStr[2]);
   const s = Number(numStr[3]);
   const g = Number(numStr[4]);
-
-  const useD5 = document.getElementById("useDiff5").checked;
-  const useS9 = document.getElementById("useSum9").checked;
-
-  document.querySelectorAll(".num-block").forEach(el=>el.classList.remove("active"));
-
+  // 只清除规则生成的杀号，重新渲染
   if(useD5){
-    setActive("wBox", mapDiff5[w]);
-    setActive("qBox", mapDiff5[q]);
-    setActive("bBox", mapDiff5[b]);
-    setActive("sBox", mapDiff5[s]);
-    setActive("gBox", mapDiff5[g]);
+    setActive("wDigits", mapDiff5[w]);
+    setActive("qDigits", mapDiff5[q]);
+    setActive("bDigits", mapDiff5[b]);
+    setActive("sDigits", mapDiff5[s]);
+    setActive("gDigits", mapDiff5[g]);
   }
   if(useS9){
-    setActive("wBox", mapSum9[w]);
-    setActive("qBox", mapSum9[q]);
-    setActive("bBox", mapSum9[b]);
-    setActive("sBox", mapSum9[s]);
-    setActive("gBox", mapSum9[g]);
+    setActive("wDigits", mapSum9[w]);
+    setActive("qDigits", mapSum9[q]);
+    setActive("bDigits", mapSum9[b]);
+    setActive("sDigits", mapSum9[s]);
+    setActive("gDigits", mapSum9[g]);
   }
 }
-function setActive(boxId, val){
-  const wrap = document.getElementById(boxId);
-  const item = wrap.querySelector(`.num-block[data-val="${val}"]`);
-  if(item) item.classList.add("active");
+
+// 【重点修复】分批拉取历史，适配探数接口 ret.data.list
+async function fetchHistoryBatch(offset) {
+  const res = await fetch(`/api/p5?offset=${offset}`);
+  const ret = await res.json();
+  console.log("分批原始返回：", ret);
+  if (ret.code === 1 && ret.data && Array.isArray(ret.data.list)) {
+    // 清除号码中间空格 "0 1 4 9 0" → "01490"
+    const cleanList = ret.data.list.map(item=>{
+      return {
+        ...item,
+        number: item.number.replace(/ /g,"")
+      }
+    })
+    return cleanList;
+  }
+  return [];
 }
 
-// ===== 分组展开逻辑【原版：组120点击→展开0-2/3-5/6-8/9开头；次级再展开0/1/2开头】=====
+// 一键获取按钮
+document.getElementById("fetchBtn").addEventListener("click", async function () {
+  rawDataList = [];
+  const batchSize = 20;
+  const targetTotal = 100;
+  const totalBatch = targetTotal / batchSize;
+  for (let batch = 0; batch < totalBatch; batch++) {
+    const offset = batch * batchSize;
+    tipBox.innerText = `正在分批拉取：第${batch + 1}/${totalBatch}批`;
+    const list = await fetchHistoryBatch(offset);
+    if (list.length === 0) break;
+    rawDataList = rawDataList.concat(list);
+    await new Promise(resolve => setTimeout(resolve, 400));
+  }
+  rawDataList = rawDataList.slice(0, targetTotal);
+  tipBox.innerText = `✅已载入${rawDataList.length}期，可点【解析数据】`;
+  console.log("合并完成数据",rawDataList);
+});
+
+// 解析数据按钮（自动提取上期开奖并执行杀号）
+document.getElementById("parseBtn").addEventListener("click", function () {
+  if (!rawDataList || rawDataList.length === 0) {
+    tipBox.innerText = "❌暂无数据，请先获取历史";
+    return;
+  }
+  tipBox.innerText = `✅解析完成，共${rawDataList.length}期`;
+  const lastItem = rawDataList[0];
+  if(lastItem && lastItem.number && lastItem.number.length===5){
+    document.getElementById("lastNumInput").value = lastItem.number;
+    runKillByNum(lastItem.number);
+  }
+});
+
+// 手动输入上期开奖，执行杀号按钮
+document.getElementById("execKillBtn").addEventListener("click", function(){
+  const val = document.getElementById("lastNumInput").value.trim();
+  runKillByNum(val);
+});
+
+// 分组展开逻辑（原版多级展开）
 const mainItems = document.querySelectorAll(".group-item[data-type]");
 const subWrap = document.getElementById("subWrap");
 const subOpt = [

@@ -286,8 +286,9 @@ document.getElementById("fetchHist").onclick = async function(){
     }
     await new Promise(res=>setTimeout(res,300));
   }
+  console.log("获取到原始历史数据：",historyDataList);
   if(historyDataList.length>0){
-    const latest = historyDataList[0].lottery_num;
+    const latest = historyDataList[0].lottery_num.trim();
     document.getElementById("lastNum").value = latest;
     tip.innerText=`✅ 已载入${historyDataList.length}期，可点【解析数据】`;
   }else{
@@ -307,15 +308,26 @@ document.getElementById("parseHist").onclick = function(){
     s:[0,0,0,0,0,0,0,0,0,0],
     g:[0,0,0,0,0,0,0,0,0,0]
   };
+  let validCount = 0;
   historyDataList.forEach(item=>{
-    const numStr = item.lottery_num.trim();
-    if(!/^\d{5}$/.test(numStr)) return;
+    //修复：清理前后空格换行
+    const numStr = item.lottery_num.trim().replace(/\s/g,"");
+    if(!/^\d{5}$/.test(numStr)) {
+      console.warn("无效号码跳过",item.lottery_num);
+      return;
+    }
+    validCount++;
     freq.w[Number(numStr[0])]++;
     freq.q[Number(numStr[1])]++;
     freq.b[Number(numStr[2])]++;
     freq.s[Number(numStr[3])]++;
     freq.g[Number(numStr[4])]++;
   })
+  console.log("有效期数：",validCount,"频次统计结果",freq);
+  if(validCount === 0){
+    alert("⚠️没有读到有效的5位开奖号码，请检查接口返回数据格式");
+    return;
+  }
 
   posList.forEach(p=>{
     const blocks = document.getElementById(`a_${p}Box`).querySelectorAll(".num-block");
@@ -333,7 +345,7 @@ document.getElementById("parseHist").onclick = function(){
     })
     document.getElementById(`a_${p}Enable`).checked = true;
   })
-  alert("✅解析完成，A池已关闭频次最低2个数字");
+  alert(`✅解析完成，有效${validCount}期，A池已关闭频次最低2个数字`);
 }
 
 const weiList = [0,1,2,3,4,5,6,7,8,9];

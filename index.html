@@ -270,30 +270,57 @@ document.getElementById("calcRule").onclick = function(){
 
 document.getElementById("fetchHist").onclick = async function(){
   const tip = document.getElementById("fetchTip");
+  const fetchBtn = this;
+  const parseBtn = document.getElementById("parseHist");
+  fetchBtn.disabled = true;
+  parseBtn.disabled = true;
+  fetchBtn.classList.add("gray");
+
   tip.innerText="开始分页加载...";
   historyDataList = [];
   const maxPage = 5;
+
+  async function fetchWithTimeout(url, timeoutMs = 10000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const resp = await fetch(url, { signal: controller.signal });
+      clearTimeout(id);
+      return resp;
+    } catch (err) {
+      clearTimeout(id);
+      throw err;
+    }
+  }
+
   for(let page=1;page<=maxPage;page++){
     tip.innerText = `正在获取第${page}/${maxPage}页`;
     try{
-      const r = await fetch(`/api/p5?page=${page}`);
+      const r = await fetchWithTimeout(`/api/p5?page=${page}`);
       const json = await r.json();
       if(json.code===1 && json.data && json.data.list){
         historyDataList.push(...json.data.list);
+      }else{
+        console.warn(`第${page}页接口返回格式异常`,json);
       }
     }catch(e){
       console.error("page",page,"请求异常",e);
+      tip.innerText = `第${page}页请求超时/失败，继续下一页`;
     }
     await new Promise(res=>setTimeout(res,300));
   }
+
   console.log("获取到原始历史数据：",historyDataList);
   if(historyDataList.length>0){
     const latest = historyDataList[0].lottery_num.trim();
     document.getElementById("lastNum").value = latest;
-    tip.innerText=`✅ 已载入${historyDataList.length}期，可点【解析数据】`;
+    tip.innerText=`✅ 已载入${historyDataList.length}期，共${historyDataList.length}条，可点【解析数据】`;
   }else{
-    tip.innerText="全部分页请求失败，请检查CF部署";
+    tip.innerText="⚠️全部分页请求失败，请检查CF api部署";
   }
+  fetchBtn.disabled = false;
+  parseBtn.disabled = false;
+  fetchBtn.classList.remove("gray");
 }
 
 document.getElementById("parseHist").onclick = function(){
@@ -301,6 +328,8 @@ document.getElementById("parseHist").onclick = function(){
     alert("请先【一键获取近100期排列五】");
     return;
   }
+  historyDataList = historyDataList.filter(x=>x && x.lottery_num);
+
   const freq = {
     w:[0,0,0,0,0,0,0,0,0,0],
     q:[0,0,0,0,0,0,0,0,0,0],
@@ -310,7 +339,6 @@ document.getElementById("parseHist").onclick = function(){
   };
   let validCount = 0;
   historyDataList.forEach(item=>{
-    //修复：清理前后空格换行
     const numStr = item.lottery_num.trim().replace(/\s/g,"");
     if(!/^\d{5}$/.test(numStr)) {
       console.warn("无效号码跳过",item.lottery_num);

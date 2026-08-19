@@ -9,406 +9,659 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,system-ui,Segoe UI,sans-serif;}
 body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;align-items:center;}
-/* 基础数字块 */
-.digit{width:40px;height:40px;border-radius:8px;border:1px solid #dcdfe6;display:grid;place-items:center;font-weight:600;transition:all .2s;color:#222;}
-/* 4种状态 */
-.digit.state-normal{background:#fff;}          /* 未选 白色 */
-.digit.state-high{background:#67c23a;color:#fff;} /* 频次最高8个 绿色 */
-.digit.state-kill{background:#ffd166;color:#222;}/* 杀号 黄色 */
-.digit.state-lowkill{background:#f56c6c;color:#fff;}/* 最低频+杀号重叠 红色 最高优先级 */
-
-.btn{padding:10px 16px;border:none;border-radius:8px;background:#4096ff;color:#fff;cursor:pointer;font-size:15px;touch-action:manipulation;}
-.btn.gray{background:#909399;}
-.btn.green{background:#67c23a;}
-.btn.warn{background:#ee6a50;}
-.tip{margin:8px;color:#333;font-weight:500;}
-input[type="text"]{padding:9px 10px;border:1px solid #dcdfe6;border-radius:8px;font-size:15px;width:260px;}
-input[type="number"]{padding:8px 6px;border:1px solid #dcdfe6;border-radius:8px;width:60px;font-size:15px;}
-#resultBox{white-space:pre-wrap;margin-top:10px;padding:10px;border:1px solid #eee;border-radius:8px;min-height:60px;max-height:220px;overflow:auto;}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center;}
+.pos-module{display:flex;align-items:center;gap:12px;margin:10px 0;padding:10px;border:1px solid #eee;border-radius:8px;}
+.pos-checkbox{width:18px;height:18px;cursor:pointer;}
+.pos-label{font-weight:bold;width:50px;}
+.num-block{width:36px;height:36px;border-radius:6px;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;user-select:none;background:#fff;transition:.2s;}
+.num-block.active{background:#2176ff;color:#fff;border-color:#2176ff;}
+.btn{padding:9px 14px;border:0;border-radius:8px;background:#2176ff;color:#fff;font-size:15px;cursor:pointer;}
+.btn.gray{background:#888;}
+.btn.green{background:#27ae60;}
+.btn.warn{background:#e53e3e;}
+input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;border-radius:8px;font-size:16px;}
+.group-wrap{margin-top:10px;}
+.group-top1{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.group-top2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.group-tab{padding:10px;border-bottom:2px solid #eee;cursor:pointer;font-weight:500;font-size:16px;position:relative;display:flex;align-items:center;justify-content:space-between;}
+.group-tab.active{border-bottom-color:#27ae60;color:#27ae60;}
+.copy-btn{padding:4px 10px;font-size:14px;background:#27ae60;color:#fff;border-radius:6px;border:none;cursor:pointer;margin-left:8px;white-space:nowrap;}
+.sub-group{margin:6px 0 6px 12px;display:none;}
+.sub-group.open{display:block;}
+.range-row{padding:6px 0;cursor:pointer;color:#2176ff;font-size:16px;display:flex;align-items:center;justify-content:space-between;}
+.range-child{margin:4px 0 4px 24px;color:#333;font-size:15px;display:none;align-items:center;justify-content:space-between;}
+.range-child.open{display:flex;}
+.item{padding:6px 0;font-size:14px;color:#444;}
+.check-line{margin:6px 0;display:flex;align-items:center;gap:6px;}
+.result-box{white-space:pre-wrap;margin-top:10px;padding:12px;background:#f8f9fa;border-radius:8px;font-size:13px;max-height:320px;overflow:auto;}
+.tip{color:#666;font-size:13px;margin:4px 0;}
+.match-highlight{background:#ff4444;color:#fff;padding:2px 4px;border-radius:4px;scroll-margin:100px;}
+.filter-section{margin-top:12px;padding-top:12px;border-top:1px solid #eee;}
+.filter-title{font-weight:bold;color:#1e40af;margin-bottom:8px;}
+.span-row{gap:12px;align-items:center;}
+.pool-title{font-weight:bold;margin:6px 0 10px 0;color:#165DFF;}
 </style>
 </head>
 <body>
 <div class="card">
+  <h3>历史数据获取</h3>
   <div class="row">
-    <button id="fetchBtn" class="btn">一键获取近100期排列五</button>
-    <button id="parseBtn" class="btn gray">解析数据</button>
-    <button id="clearAllDigit" class="btn warn">一键清空数字块</button>
-    <span id="tipBox" class="tip">无数据</span>
+    <button class="btn" id="fetchHist">一键获取近100期排列五</button>
+    <button class="btn gray" id="parseHist">解析数据</button>
+    <span class="tip" id="fetchTip"></span>
   </div>
-  <div class="row">
-    <span>上期开奖(5位):</span>
-    <input type="text" id="lastNumInput" placeholder="如01490">
-    <button id="execKillBtn" class="btn">执行差5/和9杀号</button>
+
+  <!-- ========== A池：解析历史频次号码池 ========== -->
+  <div class="pool-title">A池｜解析历史频次号码池（解析后最低2个数字变白）
+    <button class="btn gray" style="margin-left:10px;padding:4px 8px;font-size:13px;" id="resetAPool">A池一键恢复全选</button>
   </div>
-  <div class="row">
-    <label><input type="checkbox" id="useDiff5" checked> 启用【差5恒值杀号】</label>
-    <label><input type="checkbox" id="useSum9" checked> 启用【和9恒值杀号】</label>
+  <div class="pos-module">
+    <label class="pos-label">万位</label>
+    <input type="checkbox" id="a_wEnable" class="pos-checkbox" checked>
+    <div id="a_wBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">千位</label>
+    <input type="checkbox" id="a_qEnable" class="pos-checkbox" checked>
+    <div id="a_qBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">百位</label>
+    <input type="checkbox" id="a_bEnable" class="pos-checkbox" checked>
+    <div id="a_bBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">十位</label>
+    <input type="checkbox" id="a_sEnable" class="pos-checkbox" checked>
+    <div id="a_sBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">个位</label>
+    <input type="checkbox" id="a_gEnable" class="pos-checkbox" checked>
+    <div id="a_gBox" class="row"></div>
+  </div>
+
+  <div class="row" style="margin-top:16px;">
+    <label>上期开奖(5位):</label>
+    <input id="lastNum" maxlength="5" placeholder="如01490">
+    <button class="btn" id="calcRule">执行差5/和9杀号</button>
+  </div>
+  <div class="check-line">
+    <input type="checkbox" id="useCha5" checked><label for="useCha5">启用【差5恒值杀号】</label>
+  </div>
+  <div class="check-line">
+    <input type="checkbox" id="useSum9" checked><label for="useSum9">启用【和9恒值杀号】</label>
+  </div>
+</div>
+
+<!-- ========== B池：杀号运算号码池 ========== -->
+<div class="card">
+  <div class="pool-title">B池｜杀号运算号码池（执行杀号仅修改本池）
+    <button class="btn gray" style="margin-left:10px;padding:4px 8px;font-size:13px;" id="resetBPool">B池一键恢复全选</button>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">万位</label>
+    <input type="checkbox" id="b_wEnable" class="pos-checkbox" checked>
+    <div id="b_wBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">千位</label>
+    <input type="checkbox" id="b_qEnable" class="pos-checkbox" checked>
+    <div id="b_qBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">百位</label>
+    <input type="checkbox" id="b_bEnable" class="pos-checkbox" checked>
+    <div id="b_bBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">十位</label>
+    <input type="checkbox" id="b_sEnable" class="pos-checkbox" checked>
+    <div id="b_sBox" class="row"></div>
+  </div>
+  <div class="pos-module">
+    <label class="pos-label">个位</label>
+    <input type="checkbox" id="b_gEnable" class="pos-checkbox" checked>
+    <div id="b_gBox" class="row"></div>
   </div>
 </div>
 
 <div class="card">
-  <div>万 | 千 | 百 | 十 | 个 可选数字</div>
-  <div class="row">
-    <span style="width:44px;">万位</span>
-    <div class="row" id="wDigits"></div>
+  <div class="filter-section" style="border-top:none;margin-top:0;padding-top:0;">
+    <div class="filter-title">和尾过滤（前三位和尾）</div>
+    <div class="row" id="weiWrap"></div>
+    <div class="check-line">启用筛选：<input type="checkbox" id="weiSwitch" checked></div>
   </div>
-  <div class="row">
-    <span style="width:44px;">千位</span>
-    <div class="row" id="qDigits"></div>
-  </div>
-  <div class="row">
-    <span style="width:44px;">百位</span>
-    <div class="row" id="bDigits"></div>
-  </div>
-  <div class="row">
-    <span style="width:44px;">十位</span>
-    <div class="row" id="sDigits"></div>
-  </div>
-  <div class="row">
-    <span style="width:44px;">个位</span>
-    <div class="row" id="gDigits"></div>
-  </div>
-</div>
 
-<div class="card">
-  <div>和尾过滤（前三位和尾）</div>
-  <div class="row" id="hwDigits"></div>
-  <div class="row">
-    <label><input type="checkbox" id="useHwFilter" checked> 启用筛选:</label>
-  </div>
-</div>
-
-<div class="card">
-  <div>排除前三位和值（0-27）</div>
-  <div class="row" id="sum3Digits"></div>
-  <div class="row">
-    <button class="btn gray" id="clearSum3">清空全部排除和值</button>
-    <button class="btn gray" id="resetHw">重置和尾</button>
-  </div>
-</div>
-
-<div class="card">
-  <div>排除五位和值（0-45）</div>
-  <div class="row" id="sum5Digits"></div>
-  <div class="row">
-    <button class="btn gray" id="clearSum5">清空全部排除五位和值</button>
-  </div>
-</div>
-
-<div class="card">
-  <div>五位跨度筛选（号码最大值-最小值，范围0~9）</div>
-  <div class="row">
-    <span>最小跨度:</span>
-    <input type="number" id="minSpan" value="0" min="0" max="9">
-    <span>最大跨度:</span>
-    <input type="number" id="maxSpan" value="9" min="0" max="9">
-    <label><input type="checkbox" id="useSpan" checked> 启用跨度:</label>
-  </div>
-</div>
-
-<div class="card">
-  <div class="row">
-    <button id="genBtn" class="btn green">生成符合条件号码</button>
-    <button id="copyBtn" class="btn">复制全部结果</button>
-  </div>
-  <div id="resultBox"></div>
-  <div style="margin-top:14px;">
-    <div>号码验证</div>
+  <div class="filter-section">
+    <div class="filter-title">排除前三位和值（0‑27）</div>
+    <div class="row" id="sumWrap"></div>
     <div class="row">
-      <input type="text" id="verifyInput" placeholder="输入5位号码验证">
-      <button id="verifyBtn" class="btn">验证号码</button>
+      <button class="btn gray" onclick="clearBanSum()">清空全部排除和值</button>
+      <button class="btn gray" onclick="resetWei()">重置和尾</button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-title">排除五位和值（0‑45）【默认排除0‑15、35‑45】</div>
+    <div class="row" id="sum5Wrap"></div>
+    <div class="row">
+      <button class="btn gray" onclick="clearBanSum5()">清空全部排除五位和值</button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-title">五位跨度筛选（号码最大值‑最小值，范围0~9）</div>
+    <div class="row span-row">
+      <label>最小跨度：</label>
+      <input type="number" id="spanMin" min="0" max="9" value="0">
+      <label>最大跨度：</label>
+      <input type="number" id="spanMax" min="0" max="9" value="9">
+      <div class="check-line">启用跨度：<input type="checkbox" id="spanSwitch" checked></div>
     </div>
   </div>
 </div>
 
+<div class="card">
+  <div class="row">
+    <button class="btn green" id="genBtn">生成符合条件号码</button>
+    <button class="btn" id="copyAllBtn">复制全部结果</button>
+  </div>
+  <div class="group-wrap">
+    <div class="group-top1" id="groupLevel1"></div>
+    <div class="group-top2" id="groupLevel2"></div>
+    <div id="groupContainer"></div>
+  </div>
+  <div class="result-box" id="resBox"></div>
+
+  <div class="filter-section">
+    <div class="filter-title">号码验证</div>
+    <div class="row">
+      <input type="text" id="checkNumInput" maxlength="5" placeholder="输入5位号码验证">
+      <button class="btn" id="checkNumBtn">验证号码</button>
+    </div>
+    <div class="tip" id="checkTip"></div>
+  </div>
+</div>
+
 <script>
-let rawDataList = [];
-let lastResultList = [];
-// 存储每一位的频次、高频集合、最低频数字、杀号集合
-let posMeta = {
-  w:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
-  q:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
-  b:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
-  s:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()},
-  g:{freq:{},highSet:new Set(),lowNum:null,killSet:new Set()}
-};
-const tipBox = document.getElementById('tipBox');
-const resultBox = document.getElementById('resultBox');
-const posIdMap = {w:"wDigits",q:"qDigits",b:"bDigits",s:"sDigits",g:"gDigits"};
+let historyDataList = [];
+const posList = ["w","q","b","s","g"];
+const posMap = {w:"万",q:"千",b:"百",s:"十",g:"个"};
 
-// 渲染0-9数字块【显示数字，移除单机切换】
-function render0to9(containerId, posKey){
-  const wrap = document.getElementById(containerId);
-  wrap.innerHTML = '';
+//初始化A、B池
+posList.forEach(p=>{
+  const aWrap = document.getElementById(`a_${p}Box`);
   for(let i=0;i<=9;i++){
-    const d = document.createElement('div');
-    d.className = 'digit state-normal';
-    d.dataset.val = i;
-    d.dataset.pos = posKey;
-    d.innerText = i; // 显示0~9数字
-    wrap.appendChild(d);
-  }
-}
-function render0to27(containerId){
-  const wrap = document.getElementById(containerId);
-  wrap.innerHTML = '';
-  for(let i=0;i<=27;i++){
-    const d = document.createElement('div');
-    d.className = 'digit state-normal';
+    const d = document.createElement("div");
+    d.className = "num-block active";
     d.innerText = i;
-    d.dataset.val = i;
-    d.onclick = ()=>d.classList.toggle('state-high');
-    wrap.appendChild(d);
+    d.dataset.digit = i;
+    d.onclick = ()=>d.classList.toggle("active");
+    aWrap.appendChild(d);
   }
-}
-function render0to45(containerId){
-  const wrap = document.getElementById(containerId);
-  wrap.innerHTML = '';
-  for(let i=0;i<=45;i++){
-    const d = document.createElement('div');
-    d.className = 'digit state-normal';
+  const bWrap = document.getElementById(`b_${p}Box`);
+  for(let i=0;i<=9;i++){
+    const d = document.createElement("div");
+    d.className = "num-block active";
     d.innerText = i;
-    d.dataset.val = i;
-    d.onclick = ()=>d.classList.toggle('state-high');
-    wrap.appendChild(d);
+    d.dataset.digit = i;
+    d.onclick = ()=>d.classList.toggle("active");
+    bWrap.appendChild(d);
+  }
+})
+
+//一键恢复A池全部选中
+document.getElementById("resetAPool").onclick = function(){
+  posList.forEach(p=>{
+    document.querySelectorAll(`#a_${p}Box .num-block`).forEach(el=>el.classList.add("active"));
+  })
+  alert("✅A池已恢复全部数字选中");
+}
+//一键恢复B池全部选中
+document.getElementById("resetBPool").onclick = function(){
+  posList.forEach(p=>{
+    document.querySelectorAll(`#b_${p}Box .num-block`).forEach(el=>el.classList.add("active"));
+  })
+  alert("✅B池已恢复全部数字选中");
+}
+
+//获取选中数字
+function getSel(p,prefix){
+  return Array.from(document.getElementById(`${prefix}_${p}Box`).querySelectorAll(".num-block.active")).map(x=>Number(x.dataset.digit));
+}
+function clearAllActive(prefix){
+  posList.forEach(p=>{
+    document.querySelectorAll(`#${prefix}_${p}Box .num-block`).forEach(el=>el.classList.remove("active"));
+  })
+}
+
+//差5 和9配对
+const pairCha5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
+const pairSum9 = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
+
+document.getElementById("calcRule").onclick = function(){
+  const val = document.getElementById("lastNum").value.trim();
+  if(!/^\d{5}$/.test(val)){alert("上期号码必须5位数字");return;}
+  const arr = val.split("").map(Number);
+  const useCha5 = document.getElementById("useCha5").checked;
+  const useSum9 = document.getElementById("useSum9").checked;
+
+  for(let i=0;i<5;i++){
+    const p = posList[i];
+    const num = arr[i];
+    const box = document.getElementById(`b_${p}Box`);
+    const blocks = box.querySelectorAll(".num-block");
+    let killSet = new Set();
+    if(useCha5) killSet.add(pairCha5[num]);
+    if(useSum9) killSet.add(pairSum9[num]);
+
+    killSet.forEach(k=>{
+      blocks.forEach(b=>{
+        if(Number(b.dataset.digit)===k){
+          b.classList.remove("active");
+        }
+      })
+    })
+  }
+  alert("✅杀号完成，B池已对应移除杀号数字；A池不变，支持手动修改B池数字");
+}
+
+document.getElementById("fetchHist").onclick = async function(){
+  const tip = document.getElementById("fetchTip");
+  tip.innerText="开始分页加载...";
+  historyDataList = [];
+  const maxPage = 5;
+  for(let page=1;page<=maxPage;page++){
+    tip.innerText = `正在获取第${page}/${maxPage}页`;
+    try{
+      const r = await fetch(`/api/p5?page=${page}`);
+      const json = await r.json();
+      if(json.code===1 && json.data && json.data.list){
+        historyDataList.push(...json.data.list);
+      }
+    }catch(e){
+      console.error("page",page,"请求异常",e);
+    }
+    await new Promise(res=>setTimeout(res,300));
+  }
+  if(historyDataList.length>0){
+    const latest = historyDataList[0].lottery_num;
+    document.getElementById("lastNum").value = latest;
+    tip.innerText=`✅ 已载入${historyDataList.length}期，可点【解析数据】`;
+  }else{
+    tip.innerText="全部分页请求失败，请检查CF部署";
   }
 }
-// 初始化渲染
-render0to9('wDigits','w');
-render0to9('qDigits','q');
-render0to9('bDigits','b');
-render0to9('sDigits','s');
-render0to9('gDigits','g');
-render0to9('hwDigits');
-render0to27('sum3Digits');
-render0to45('sum5Digits');
 
-// 差5 / 和9 映射
-const mapDiff5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
-const mapSum9  = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
+document.getElementById("parseHist").onclick = function(){
+  if(!historyDataList || historyDataList.length===0){
+    alert("请先【一键获取近100期排列五】");
+    return;
+  }
+  const freq = {
+    w:[0,0,0,0,0,0,0,0,0,0],
+    q:[0,0,0,0,0,0,0,0,0,0],
+    b:[0,0,0,0,0,0,0,0,0,0],
+    s:[0,0,0,0,0,0,0,0,0,0],
+    g:[0,0,0,0,0,0,0,0,0,0]
+  };
+  historyDataList.forEach(item=>{
+    const numStr = item.lottery_num.trim();
+    if(!/^\d{5}$/.test(numStr)) return;
+    freq.w[Number(numStr[0])]++;
+    freq.q[Number(numStr[1])]++;
+    freq.b[Number(numStr[2])]++;
+    freq.s[Number(numStr[3])]++;
+    freq.g[Number(numStr[4])]++;
+  })
 
-// 【核心】根据优先级渲染单个位置所有数字样式
-function renderPosStyle(posKey){
-  const meta = posMeta[posKey];
-  const domWrap = document.getElementById(posIdMap[posKey]);
-  const digits = domWrap.querySelectorAll('.digit');
-  digits.forEach(el=>{
-    const num = Number(el.dataset.val);
-    // 优先级：最低频+杀号重叠(红) > 杀号(黄) > 高频(绿) > 默认白
-    if(num === meta.lowNum && meta.killSet.has(num)){
-      el.className = "digit state-lowkill";
-    }else if(meta.killSet.has(num)){
-      el.className = "digit state-kill";
-    }else if(meta.highSet.has(num)){
-      el.className = "digit state-high";
+  posList.forEach(p=>{
+    const blocks = document.getElementById(`a_${p}Box`).querySelectorAll(".num-block");
+    blocks.forEach(block=>block.classList.add("active"));
+
+    const freqArr = freq[p].map((cnt,digit)=>({digit,cnt}));
+    freqArr.sort((a,b)=>a.cnt - b.cnt);
+    const low2 = new Set(freqArr.slice(0,2).map(x=>x.digit));
+
+    blocks.forEach(block=>{
+      const d = Number(block.dataset.digit);
+      if(low2.has(d)){
+        block.classList.remove("active");
+      }
+    })
+    document.getElementById(`a_${p}Enable`).checked = true;
+  })
+  alert("✅解析完成，A池已关闭频次最低2个数字");
+}
+
+const weiList = [0,1,2,3,4,5,6,7,8,9];
+const sumList = Array.from({length:28},(v,i)=>i);
+const sum5List = Array.from({length:46},(v,i)=>i);
+let selWei = new Set(weiList);
+let banSum = new Set([0,1,2,3,4,5,6,7,8,9,10]);
+
+// ======五位和值：默认排除0‑15，35‑45======
+let banSum5 = new Set();
+for(let i=0;i<=15;i++) banSum5.add(i);
+for(let i=35;i<=45;i++) banSum5.add(i);
+
+const weiWrap = document.getElementById('weiWrap');
+weiList.forEach(n=>{
+  let btn = document.createElement('button');
+  btn.className = 'num-block active';
+  btn.textContent = n;
+  btn.onclick = ()=>{
+    selWei.has(n) ? selWei.delete(n) : selWei.add(n);
+    btn.classList.toggle('active');
+  }
+  weiWrap.appendChild(btn);
+})
+
+const sumWrap = document.getElementById('sumWrap');
+sumList.forEach(n=>{
+  let btn = document.createElement('button');
+  btn.className = 'num-block' + (banSum.has(n)?' active':'');
+  btn.textContent = n;
+  btn.onclick = ()=>{
+    banSum.has(n) ? banSum.delete(n) : banSum.add(n);
+    btn.classList.toggle('active');
+  }
+  sumWrap.appendChild(btn);
+})
+
+const sum5Wrap = document.getElementById('sum5Wrap');
+sum5List.forEach(n=>{
+  let btn = document.createElement('button');
+  btn.className = 'num-block' + (banSum5.has(n)?' active':'');
+  btn.textContent = n;
+  btn.onclick = ()=>{
+    banSum5.has(n) ? banSum5.delete(n) : banSum5.add(n);
+    btn.classList.toggle('active');
+  }
+  sum5Wrap.appendChild(btn);
+})
+
+function clearBanSum(){
+  banSum.clear();
+  document.querySelectorAll('#sumWrap .num-block').forEach(btn=>btn.classList.remove('active'));
+}
+function clearBanSum5(){
+  banSum5.clear();
+  document.querySelectorAll('#sum5Wrap .num-block').forEach(btn=>btn.classList.remove('active'));
+}
+function resetWei(){
+  selWei.clear();
+  weiList.forEach(n=>selWei.add(n));
+  document.querySelectorAll('#weiWrap .num-block').forEach(btn=>btn.classList.add('active'));
+}
+
+function getFrontThreeType(numStr){
+  const a = numStr[0], b = numStr[1], c = numStr[2];
+  let cnt = {};
+  [a,b,c].forEach(ch=>cnt[ch] = (cnt[ch]||0)+1);
+  const vals = Object.values(cnt).sort((x,y)=>y-x);
+  if(vals[0] === 3) return 'none';
+  if(vals[0] === 2) return 'frontThree';
+  return 'frontSix';
+}
+function getFiveGroup(numStr) {
+  let cnt = {};
+  for(let c of numStr) cnt[c] = (cnt[c]||0)+1;
+  let counts = Object.values(cnt).sort((a,b)=>b-a);
+  if(counts[0] === 5) return 'g55';
+  if(counts[0] === 4) return 'g10';
+  if(counts[0] === 3) {
+    if(counts[1] === 2) return 'g5';
+    return 'g20';
+  }
+  if(counts[0] === 2) {
+    if(counts[1] === 2) return 'g30';
+    return 'g60';
+  }
+  return 'g120';
+}
+function getFiveGroupName(key){
+  const map = {
+    g120: "组120(五不同)",g60:"组60(一对)",g30:"组30(两对)",
+    g20:"组20(三条)",g10:"组10(四条)",g5:"组5(三二同)",g55:"五同豹子",
+    frontSix:"前三位组六",frontThree:"前三位组三"
+  }
+  return map[key] || key;
+}
+function calcSpan(numStr){
+  const arr = numStr.split("").map(Number);
+  return Math.max(...arr) - Math.min(...arr);
+}
+function filterStartRange(arr,min,max){
+  return arr.filter(x=>{
+    const first = Number(x[0]);
+    return first>=min && first<=max;
+  })
+}
+function filterStartExact(arr,target){
+  return arr.filter(x=>Number(x[0])===target);
+}
+function globalFilter(num){
+  const sum3 = Number(num[0])+Number(num[1])+Number(num[2]);
+  const sum5 = sum3 + Number(num[3])+Number(num[4]);
+  const wei3 = sum3 % 10;
+  if(document.getElementById('weiSwitch').checked && !selWei.has(wei3)) return false;
+  if(banSum.has(sum3)) return false;
+  if(banSum5.has(sum5)) return false;
+  if(document.getElementById('spanSwitch').checked){
+    const s = calcSpan(num);
+    const minS = Number(document.getElementById('spanMin').value)||0;
+    const maxS = Number(document.getElementById('spanMax').value)||9;
+    if(s < minS || s > maxS) return false;
+  }
+  return true;
+}
+
+let allNumList = [];
+let groupData = {};
+const level1Keys = ["frontSix","frontThree"];
+const level2Keys = ["g120","g60","g30","g20","g10","g5"];
+
+document.getElementById("genBtn").onclick = function(){
+  const finalPool = {};
+  posList.forEach(p=>{
+    const aEnable = document.getElementById(`a_${p}Enable`).checked;
+    const bEnable = document.getElementById(`b_${p}Enable`).checked;
+    const aDigits = getSel(p,"a");
+    const bDigits = getSel(p,"b");
+    let res;
+    if(aEnable && !bEnable){
+      res = aDigits.length>0 ? aDigits : [0,1,2,3,4,5,6,7,8,9];
+    }else if(!aEnable && bEnable){
+      res = bDigits.length>0 ? bDigits : [0,1,2,3,4,5,6,7,8,9];
+    }else if(aEnable && bEnable){
+      const setA = new Set(aDigits);
+      res = bDigits.filter(d=>setA.has(d));
+      if(res.length===0) res = [0,1,2,3,4,5,6,7,8,9];
     }else{
-      el.className = "digit state-normal";
+      res = [0,1,2,3,4,5,6,7,8,9];
+    }
+    finalPool[p] = res;
+  });
+
+  allNumList = [];
+  for(let w of finalPool.w)for(let q of finalPool.q)for(let b of finalPool.b)for(let s of finalPool.s)for(let g of finalPool.g){
+    const num = `${w}${q}${b}${s}${g}`;
+    if(globalFilter(num)) allNumList.push(num);
+  }
+
+  groupData = {
+    frontSix:[], frontThree:[],
+    g120:[],g60:[],g30:[],g20:[],g10:[],g5:[],g55:[]
+  };
+  allNumList.forEach(n=>{
+    const frontType = getFrontThreeType(n);
+    if(frontType === 'frontSix') groupData.frontSix.push(n);
+    if(frontType === 'frontThree') groupData.frontThree.push(n);
+    const fiveType = getFiveGroup(n);
+    groupData[fiveType].push(n);
+  })
+
+  const level1Wrap = document.getElementById("groupLevel1");
+  level1Wrap.innerHTML = "";
+  level1Keys.forEach(k=>{
+    const list = groupData[k];
+    const tab = document.createElement("div");
+    tab.className = "group-tab";
+    tab.dataset.type = k;
+    tab.innerHTML = `
+      <span>${getFiveGroupName(k)} (${list.length})</span>
+      <button class="copy-btn" data-copy="${k}">一键复制</button>
+    `;
+    level1Wrap.appendChild(tab);
+  })
+
+  const level2Wrap = document.getElementById("groupLevel2");
+  level2Wrap.innerHTML = "";
+  level2Keys.forEach(k=>{
+    const list = groupData[k];
+    const tab = document.createElement("div");
+    tab.className = "group-tab";
+    tab.dataset.type = k;
+    tab.innerHTML = `
+      <span>${getFiveGroupName(k)} (${list.length})</span>
+      <button class="copy-btn" data-copy="${k}">一键复制</button>
+    `;
+    level2Wrap.appendChild(tab);
+  })
+
+  const container = document.getElementById("groupContainer");
+  container.innerHTML="";
+  [...level1Keys,...level2Keys].forEach(k=>{
+    const list = groupData[k];
+    if(list.length===0) return;
+    const html = `
+    <div class="sub-group" data-root="${k}">
+      <div class="subsub">
+        <div class="range-row" data-key="${k}" data-min="0" data-max="2">
+          <span>0‑2开头【${filterStartRange(list,0,2).length}注】</span>
+          <button class="copy-btn range-copy">复制</button>
+        </div>
+        <div class="range-child" data-parent="${k}" data-exact="0"><span>0开头:【${filterStartExact(list,0).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+        <div class="range-child" data-parent="${k}" data-exact="1"><span>1开头:【${filterStartExact(list,1).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+        <div class="range-child" data-parent="${k}" data-exact="2"><span>2开头:【${filterStartExact(list,2).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+
+        <div class="range-row" data-key="${k}" data-min="3" data-max="5">
+          <span>3‑5开头【${filterStartRange(list,3,5).length}注】</span>
+          <button class="copy-btn range-copy">复制</button>
+        </div>
+        <div class="range-child" data-parent="${k}" data-exact="3"><span>3开头:【${filterStartExact(list,3).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+        <div class="range-child" data-parent="${k}" data-exact="4"><span>4开头:【${filterStartExact(list,4).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+        <div class="range-child" data-parent="${k}" data-exact="5"><span>5开头:【${filterStartExact(list,5).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+
+        <div class="range-row" data-key="${k}" data-min="6" data-max="8">
+          <span>6‑8开头【${filterStartRange(list,6,8).length}注】</span>
+          <button class="copy-btn range-copy">复制</button>
+        </div>
+        <div class="range-child" data-parent="${k}" data-exact="6"><span>6开头:【${filterStartExact(list,6).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+        <div class="range-child" data-parent="${k}" data-exact="7"><span>7开头:【${filterStartExact(list,7).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+        <div class="range-child" data-parent="${k}" data-exact="8"><span>8开头:【${filterStartExact(list,8).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+
+        <div class="range-row" data-key="${k}" data-min="9" data-max="9">
+          <span>9开头【${filterStartRange(list,9,9).length}注】</span>
+          <button class="copy-btn range-copy">复制</button>
+        </div>
+        <div class="range-child" data-parent="${k}" data-exact="9"><span>9开头:【${filterStartExact(list,9).length}注】</span><button class="copy-btn child-copy">复制</button></div>
+      </div>
+    </div>
+    `;
+    container.insertAdjacentHTML('beforeend',html);
+  })
+
+  document.querySelectorAll(".group-tab").forEach(tab=>{
+    tab.onclick = function(){
+      const typeKey = this.dataset.type;
+      this.classList.toggle("active");
+      const rootWrap = document.querySelector(`.sub-group[data-root="${typeKey}"]`);
+      if(!rootWrap) return;
+      rootWrap.classList.toggle("open");
     }
   })
+  document.querySelectorAll(".range-row").forEach(row=>{
+    row.onclick=function(){
+      const key = this.dataset.key;
+      const min = Number(this.dataset.min);
+      const max = Number(this.dataset.max);
+      const childList = Array.from(document.querySelectorAll(`.range-child[data-parent="${key}"]`)).filter(el=>{
+        const num = Number(el.dataset.exact);
+        return num >= min && num <= max;
+      })
+      childList.forEach(c=>c.classList.toggle("open"));
+    }
+  })
+  document.querySelectorAll(".range-copy").forEach(btn=>{
+    btn.onclick=function(e){
+      e.stopPropagation();
+      const rowDom = this.parentElement;
+      const key = rowDom.dataset.key;
+      const min = Number(rowDom.dataset.min);
+      const max = Number(rowDom.dataset.max);
+      const srcList = groupData[key];
+      const targetList = filterStartRange(srcList, min, max);
+      navigator.clipboard.writeText(targetList.join("\n")).then(()=>alert(`✅ 已复制${targetList.length}条`));
+    }
+  })
+  document.querySelectorAll(".child-copy").forEach(btn=>{
+    btn.onclick=function(e){
+      e.stopPropagation();
+      const childDom = this.parentElement;
+      const key = childDom.dataset.parent;
+      const exactNum = Number(childDom.dataset.exact);
+      const srcList = groupData[key];
+      const targetList = filterStartExact(srcList, exactNum);
+      navigator.clipboard.writeText(targetList.join("\n")).then(()=>alert(`✅ 已复制${targetList.length}条号码`));
+    }
+  })
+  document.querySelectorAll(".copy-btn[data-copy]").forEach(btn=>{
+    btn.onclick=function(e){
+      e.stopPropagation();
+      const key = this.dataset.copy;
+      const list = groupData[key];
+      navigator.clipboard.writeText(list.join("\n")).then(()=>alert(`✅ 已复制${list.length}条号码`));
+    }
+  })
+  document.getElementById("resBox").innerText = `合计生成:${allNumList.length} 注`;
 }
 
-// 一键清空所有万/千/百/十/个位数字块
-document.getElementById('clearAllDigit').onclick = function(){
-  ['w','q','b','s','g'].forEach(k=>{
-    posMeta[k].highSet.clear();
-    posMeta[k].killSet.clear();
-    posMeta[k].lowNum = null;
-    renderPosStyle(k);
-  })
-  tipBox.innerText="✅ 数字块已全部清空重置";
+document.getElementById("copyAllBtn").onclick = function(){
+  if(allNumList.length===0){alert("暂无结果");return;}
+  navigator.clipboard.writeText(allNumList.join("\n")).then(()=>alert(`✅ 已复制全部${allNumList.length}条号码`));
 }
 
-// 解析历史数据：统计分位频次，取最高8个，记录最低1个【修复排序BUG】
-function calcFreqFromData(){
-  console.log("开始解析历史数据，条数：",rawDataList.length);
-  // 重置频次数据
-  ['w','q','b','s','g'].forEach(k=>{
-    posMeta[k].freq = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0};
-    posMeta[k].highSet.clear();
-    posMeta[k].killSet.clear();
-    posMeta[k].lowNum = null;
-  })
-  // 遍历历史开奖统计
-  rawDataList.forEach(item=>{
-    const n = item.number;
-    if(n.length!==5) return;
-    posMeta.w.freq[ Number(n[0]) ]++;
-    posMeta.q.freq[ Number(n[1]) ]++;
-    posMeta.b.freq[ Number(n[2]) ]++;
-    posMeta.s.freq[ Number(n[3]) ]++;
-    posMeta.g.freq[ Number(n[4]) ]++;
-  })
-  // 每个位置单独排序：频次从高→低【修复：分开两次排序，不再原地覆盖】
-  ['w','q','b','s','g'].forEach(k=>{
-    const freqArr = Object.entries(posMeta[k].freq).map(([v,c])=>({val:Number(v),count:c}));
-    // 先复制一份，高频降序，取前8
-    const freqDesc = [...freqArr].sort((a,b)=>b.count - a.count);
-    const top8 = freqDesc.slice(0,8);
-    top8.forEach(x=>posMeta[k].highSet.add(x.val));
-    // 再复制一份，升序拿最低
-    const freqAsc = [...freqArr].sort((a,b)=>a.count - b.count);
-    posMeta[k].lowNum = freqAsc[0].val;
-    renderPosStyle(k);
-  })
-  console.log("解析完成");
-}
-
-// 执行杀号逻辑，存入killSet
-function runKillRule(num5){
-  if(!num5 || num5.length!==5) return alert('请输入5位号码！');
-  const w = Number(num5[0]);
-  const q = Number(num5[1]);
-  const b = Number(num5[2]);
-  const s = Number(num5[3]);
-  const g = Number(num5[4]);
-  const useD5 = document.getElementById('useDiff5').checked;
-  const useS9 = document.getElementById('useSum9').checked;
-  // 清空旧杀号
-  ['w','q','b','s','g'].forEach(k=>posMeta[k].killSet.clear());
-
-  if(useD5){
-    posMeta.w.killSet.add(mapDiff5[w]);
-    posMeta.q.killSet.add(mapDiff5[q]);
-    posMeta.b.killSet.add(mapDiff5[b]);
-    posMeta.s.killSet.add(mapDiff5[s]);
-    posMeta.g.killSet.add(mapDiff5[g]);
-  }
-  if(useS9){
-    posMeta.w.killSet.add(mapSum9[w]);
-    posMeta.q.killSet.add(mapSum9[q]);
-    posMeta.b.killSet.add(mapSum9[b]);
-    posMeta.s.killSet.add(mapSum9[s]);
-    posMeta.g.killSet.add(mapSum9[g]);
-  }
-  // 重绘颜色
-  ['w','q','b','s','g'].forEach(k=>renderPosStyle(k));
-}
-document.getElementById('execKillBtn').onclick = function(){
-  const inputVal = document.getElementById('lastNumInput').value.trim();
-  runKillRule(inputVal);
-}
-
-// ======== 生成号码相关【只取绿色高频作为可选池】 ========
-function getPosPool(containerId){
-  const arr = [];
-  document.querySelectorAll(`#${containerId} .digit.state-high`).forEach(el=>{
-    arr.push(Number(el.dataset.val));
-  })
-  return [...new Set(arr)];
-}
-function cartesianProduct(arrList){
-  return arrList.reduce((acc, curr)=>{
-    const res = [];
-    for(let a of acc) for(let b of curr) res.push([...a,b]);
-    return res;
-  }, [[]]);
-}
-document.getElementById('genBtn').onclick = function(){
-  resultBox.innerText = "生成中...";
-  lastResultList = [];
-  const wPool = getPosPool('wDigits');
-  const qPool = getPosPool('qDigits');
-  const bPool = getPosPool('bDigits');
-  const sPool = getPosPool('sDigits');
-  const gPool = getPosPool('gDigits');
-  if(!wPool.length||!qPool.length||!bPool.length||!sPool.length||!gPool.length){
-    resultBox.innerText = "❌ 至少每个位置保留1个绿色可选数字！";
+document.getElementById("checkNumBtn").onclick = function(){
+  const input = document.getElementById("checkNumInput").value.trim();
+  const tip = document.getElementById("checkTip");
+  if(!/^\d{5}$/.test(input)){
+    tip.style.color = "#e53e3e";
+    tip.innerText = "请输入5位纯数字号码";
     return;
   }
-  const useHw = document.getElementById('useHwFilter').checked;
-  const excludeHwSet = new Set();
-  document.querySelectorAll('#hwDigits .digit.state-normal').forEach(el=>excludeHwSet.add(Number(el.dataset.val)));
-  const excludeSum3Set = new Set();
-  document.querySelectorAll('#sum3Digits .digit.state-normal').forEach(el=>excludeSum3Set.add(Number(el.dataset.val)));
-  const excludeSum5Set = new Set();
-  document.querySelectorAll('#sum5Digits .digit.state-normal').forEach(el=>excludeSum5Set.add(Number(el.dataset.val)));
-  const useSpan = document.getElementById('useSpan').checked;
-  const minSpan = Number(document.getElementById('minSpan').value);
-  const maxSpan = Number(document.getElementById('maxSpan').value);
-
-  const allList = cartesianProduct([wPool,qPool,bPool,sPool,gPool]);
-  for(let d of allList){
-    const [w,q,b,s,g] = d;
-    const sum3 = w+q+b;
-    const hw = sum3 % 10;
-    const sum5 = w+q+b+s+g;
-    const span = Math.max(...d) - Math.min(...d);
-    if(useHw && excludeHwSet.has(hw)) continue;
-    if(excludeSum3Set.has(sum3)) continue;
-    if(excludeSum5Set.has(sum5)) continue;
-    if(useSpan && (span<minSpan || span>maxSpan)) continue;
-    lastResultList.push(`${w}${q}${b}${s}${g}`);
+  if(allNumList.length===0){
+    tip.style.color = "#e53e3e";
+    tip.innerText = "请先生成号码后再验证";
+    return;
   }
-  if(lastResultList.length === 0){
-    resultBox.innerText = "⚠️ 没有符合条件号码，请放宽筛选条件";
+  const idx = allNumList.indexOf(input);
+  if(idx>-1){
+    tip.style.color = "#27ae60";
+    tip.innerText = `✅ 号码${input}符合筛选规则，在结果中第${idx+1}位`;
+    const resBox = document.getElementById("resBox");
+    const lines = resBox.textContent.split("\n");
+    const newLines = lines.map(line=>line===input ? `<span class="match-highlight">${line}</span>` : line);
+    resBox.innerHTML = newLines.join("\n");
+    const target = resBox.querySelector(".match-highlight");
+    if(target) target.scrollIntoView({behavior:"smooth",block:"center"});
   }else{
-    resultBox.innerText = `✅ 共${lastResultList.length}组\n` + lastResultList.join("\n");
+    tip.style.color = "#e53e3e";
+    tip.innerText = `❌ 号码${input}不符合筛选规则，不在结果中`;
   }
-}
-document.getElementById('copyBtn').onclick = async function(){
-  if(!lastResultList.length){
-    alert("暂无结果，先生成号码！");
-    return;
-  }
-  await navigator.clipboard.writeText(lastResultList.join("\n"));
-  alert("✅ 复制成功！");
-}
-
-// 探数API拉取历史
-async function fetchBatch(offset) {
-  const res = await fetch(`/api/p5?offset=${offset}`);
-  const ret = await res.json();
-  console.log(ret);
-  if(ret.code ===1 && ret.data && Array.isArray(ret.data.list)){
-    return ret.data.list.map(item=>({...item, number:item.number.replace(/ /g,'')}));
-  }
-  return [];
-}
-document.getElementById('fetchBtn').onclick = async function(){
-  rawDataList = [];
-  const batchSize=20, total=100;
-  const batchCount = total / batchSize;
-  for(let b=0;b<batchCount;b++){
-    tipBox.innerText = `拉取中 ${b+1}/${batchCount}`;
-    const list = await fetchBatch(b*batchSize);
-    if(!list.length) break;
-    rawDataList = rawDataList.concat(list);
-    await new Promise(r=>setTimeout(r,400));
-  }
-  rawDataList = rawDataList.slice(0,total);
-  tipBox.innerText = `✅载入${rawDataList.length}期`;
-}
-// 【解析数据按钮】
-document.getElementById('parseBtn').onclick = function(){
-  console.log("点击解析按钮");
-  if(!rawDataList || rawDataList.length ===0){
-    tipBox.innerText='❌请先【一键获取近100期排列五】';
-    return;
-  }
-  calcFreqFromData();
-  tipBox.innerText = `✅解析${rawDataList.length}期，自动标记频次最高8个(绿色)`;
-  const last = rawDataList[0];
-  if(last?.number?.length===5){
-    document.getElementById('lastNumInput').value = last.number;
-  }
-}
-
-// 重置和尾
-document.getElementById('resetHw').onclick = function(){
-  document.querySelectorAll('#hwDigits .digit').forEach(d=>d.className='digit state-normal');
-}
-document.getElementById('clearSum3').onclick = function(){
-  document.querySelectorAll('#sum3Digits .digit').forEach(d=>d.className='digit state-normal');
-}
-document.getElementById('clearSum5').onclick = function(){
-  document.querySelectorAll('#sum5Digits .digit').forEach(d=>d.className='digit state-normal');
-}
-document.getElementById('verifyBtn').onclick = function(){
-  const v = document.getElementById('verifyInput').value.trim();
-  if(v.length!==5) return alert('必须5位数字');
-  alert('验证号码：'+v);
 }
 </script>
 </body>

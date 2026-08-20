@@ -29,7 +29,6 @@ button:active{opacity:0.85;}
 .sub-group.show{display:block;}
 .copy-btn{font-size:13px;padding:3px 8px;background:#6c757d;color:#fff;border-radius:4px;cursor:pointer;margin-left:auto;}
 .count-badge{font-size:13px;color:#666;}
-textarea{width:100%;min-height:140px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin:6px 0;}
 .checkbox-wrap{display:flex;align-items:center;gap:6px;margin:4px 8px 4px 0;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:600px){
@@ -146,6 +145,28 @@ let generatedNumbers = [];
 let excludeHeWei = new Set();
 let excludeQ3Sum = new Set();
 let excludeAllSum = new Set();
+
+// =========事件委托：统一处理所有动态复制按钮（核心修复）========
+document.getElementById("groupContainer").addEventListener("click",function(e){
+    if(e.target.classList.contains("copy-btn")){
+        e.stopPropagation();
+        const dataStr = e.target.closest(".group-title").dataset.numbers;
+        if(!dataStr){
+            alert("暂无号码");
+            return;
+        }
+        const arr = JSON.parse(dataStr);
+        navigator.clipboard.writeText(arr.join(":"));
+        alert("已复制（冒号分隔）");
+    }
+    //分组展开收起
+    const titleEl = e.target.closest(".group-title");
+    if(titleEl && !e.target.classList.contains("copy-btn")){
+        titleEl.classList.toggle("active");
+        const sub = titleEl.nextElementSibling;
+        if(sub) sub.classList.toggle("show");
+    }
+})
 
 function initPosBlocks(){
     for(let p=0;p<5;p++){
@@ -443,159 +464,88 @@ document.getElementById("verifyBtn").onclick = function(){
     }
 }
 
+
+function getGroupByType(list){
+    const out = {g120:[],g60:[],g30:[],g20:[],g10:[],g5:[]};
+    list.forEach(num=>{
+        let s = new Set(num.split(''));
+        let sz = s.size;
+        if(sz===5) out.g120.push(num);
+        else if(sz===4) out.g60.push(num);
+        else if(sz===3) out.g30.push(num);
+        else if(sz===2) out.g20.push(num);
+        else if(sz===1) out.g5.push(num);
+    })
+    return out;
+}
+
+//生成完整分组html，号码数组存到data-numbers属性，委托事件读取
 function buildGroupHtml(numList){
     const container = document.getElementById("groupContainer");
     container.innerHTML="";
     const g6 = [];
     const g3 = [];
-    const rest = [];
     numList.forEach(n=>{
         let q3 = n.slice(0,3);
         let s = new Set(q3.split(''));
         if(s.size===3) g6.push(n);
         else if(s.size===2) g3.push(n);
-        else rest.push(n);
     })
 
-    function makeGroupDom(title,count,childHtml,numArr){
-        let wrapDiv = document.createElement("div");
-        wrapDiv.className="group-item";
-        let titleDiv = document.createElement("div");
-        titleDiv.className="group-title";
-        titleDiv.innerHTML = `<span>${title}</span><span class="count-badge">(${count}注)</span><span class="copy-btn">复制全部</span>`;
-        let subDiv = document.createElement("div");
-        subDiv.className="sub-group";
-        subDiv.innerHTML = childHtml;
-        wrapDiv.appendChild(titleDiv);
-        wrapDiv.appendChild(subDiv);
-
-        const cp = titleDiv.querySelector(".copy-btn");
-        cp.onclick = (e)=>{
-            e.stopPropagation();
-            navigator.clipboard.writeText(numArr.join(":"));
-            alert("已复制（冒号分隔）");
-        }
-        titleDiv.onclick = ()=>{
-            titleDiv.classList.toggle("active");
-            subDiv.classList.toggle("show");
-        }
-        return wrapDiv;
+    function makeGroup(title,count,numArr,subHtml){
+        const jsonStr = JSON.stringify(numArr);
+        return `
+        <div class="group-item">
+            <div class="group-title" data-numbers='${jsonStr}'>
+                <span>${title}</span>
+                <span class="count-badge">(${count}注)</span>
+                <span class="copy-btn">复制全部</span>
+            </div>
+            <div class="sub-group">${subHtml}</div>
+        </div>`;
     }
 
-    function getGroupByType(list){
-        const out = {g120:[],g60:[],g30:[],g20:[],g10:[],g5:[]};
-        list.forEach(num=>{
-            let s = new Set(num.split(''));
-            let sz = s.size;
-            if(sz===5) out.g120.push(num);
-            else if(sz===4) out.g60.push(num);
-            else if(sz===3) out.g30.push(num);
-            else if(sz===2) out.g20.push(num);
-            else if(sz===1) out.g5.push(num);
-        })
-        return out;
-    }
-
-    function buildSubLevel(list){
-        if(list.length===0) return "<div style='padding:4px;color:#999'>无号码</div>";
+    function buildSubLevelHtml(list){
+        if(list.length===0) return `<div style='padding:4px;color:#999'>无号码</div>`;
         const g = getGroupByType(list);
-        const names = [
+        const groupDef = [
             {k:"g120",name:"组120"},
             {k:"g60",name:"组60"},
             {k:"g30",name:"组30"},
             {k:"g20",name:"组20"},
             {k:"g10",name:"组10"},
             {k:"g5",name:"组5"},
-        ]
-        let outer = document.createElement("div");
-        outer.className="two-col";
-        names.forEach(ni=>{
-            const arr = g[ni.k];
-            let itemDom = document.createElement("div");
-            itemDom.className="group-item";
-            let tDiv = document.createElement("div");
-            tDiv.className="group-title";
-            tDiv.innerHTML = `<span>${ni.name}</span><span class="count-badge">(${arr.length}注)</span><span class="copy-btn">复制全部</span>`;
-            let sDiv = document.createElement("div");
-            sDiv.className="sub-group";
-
+        ];
+        let html=`<div class="two-col">`;
+        groupDef.forEach(gi=>{
+            const arr = g[gi.k];
             const l02 = arr.filter(x=>["0","1","2"].includes(x[0]));
             const l35 = arr.filter(x=>["3","4","5"].includes(x[0]));
             const l68 = arr.filter(x=>["6","7","8"].includes(x[0]));
             const l9 = arr.filter(x=>x[0]==="9");
-
-            sDiv.appendChild(renderThirdLevel("0‑2开头",l02));
-            sDiv.appendChild(renderThirdLevel("3‑5开头",l35));
-            sDiv.appendChild(renderThirdLevel("6‑8开头",l68));
-            sDiv.appendChild(renderThirdLevel("9开头",l9));
-
-            itemDom.appendChild(tDiv);
-            itemDom.appendChild(sDiv);
-            outer.appendChild(itemDom);
-
-            const cBtn = tDiv.querySelector(".copy-btn");
-            cBtn.onclick=(e)=>{
-                e.stopPropagation();
-                navigator.clipboard.writeText(arr.join(":"));
-                alert("已复制（冒号分隔）");
-            }
-            tDiv.onclick=()=>{
-                tDiv.classList.toggle("active");
-                sDiv.classList.toggle("show");
-            }
+            let thirdHtml = renderThirdHtml("0‑2开头",l02)+renderThirdHtml("3‑5开头",l35)+renderThirdHtml("6‑8开头",l68)+renderThirdHtml("9开头",l9);
+            html += makeGroup(gi.name,arr.length,arr,thirdHtml);
         })
-        return outer.outerHTML;
+        html += `</div>`;
+        return html;
     }
 
-    function renderThirdLevel(title,numArr){
-        let wrap = document.createElement("div");
-        wrap.className="group-item";
-        let tDiv = document.createElement("div");
-        tDiv.className="group-title";
-        tDiv.innerHTML = `<span>${title}</span><span class="count-badge">(${numArr.length}注)</span><span class="copy-btn">复制全部</span>`;
-        let sDiv = document.createElement("div");
-        sDiv.className="sub-group";
-        wrap.appendChild(tDiv);
-        wrap.appendChild(sDiv);
-
-        const cpBtn = tDiv.querySelector(".copy-btn");
-        cpBtn.onclick = (e)=>{
-            e.stopPropagation();
-            navigator.clipboard.writeText(numArr.join(":"));
-            alert("已复制（冒号分隔）");
-        }
-        tDiv.onclick = function(){
-            tDiv.classList.toggle("active");
-            sDiv.classList.toggle("show");
-            if(sDiv.classList.contains("show") && sDiv.innerHTML===""){
-                let groupMap = {};
-                numArr.forEach(n=>{
-                    let first = n[0];
-                    if(!groupMap[first]) groupMap[first]=[];
-                    groupMap[first].push(n);
-                })
-                Object.keys(groupMap).sort().forEach(k=>{
-                    let subArr = groupMap[k];
-                    let subTitle = document.createElement("div");
-                    subTitle.className="group-title";
-                    subTitle.innerHTML = `<span>${k}开头</span><span class="count-badge">(${subArr.length}注)</span><span class="copy-btn">复制全部</span>`;
-                    sDiv.appendChild(subTitle);
-                    let subCp = subTitle.querySelector(".copy-btn");
-                    subCp.onclick=(e)=>{
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(subArr.join(":"));
-                        alert("已复制（冒号分隔）");
-                    }
-                })
-            }
-        }
-        return wrap;
+    function renderThirdHtml(title,numArr){
+        let innerSub="";
+        //0开头、1开头子层级
+        const map = {};
+        numArr.forEach(n=>{
+            let f = n[0];
+            if(!map[f]) map[f]=[];
+            map[f].push(n);
+        })
+        Object.keys(map).sort().forEach(k=>{
+            innerSub += makeGroup(`${k}开头`,map[k].length,map[k],"");
+        })
+        return makeGroup(title,numArr.length,numArr,innerSub);
     }
 
-    const g6Dom = makeGroupDom("前三位组六",g6.length,buildSubLevel(g6),g6);
-    const g3Dom = makeGroupDom("前三位组三",g3.length,buildSubLevel(g3),g3);
-    container.appendChild(g6Dom);
-    container.appendChild(g3Dom);
+    container.innerHTML = makeGroup("前三位组六",g6.length,g6,buildSubLevelHtml(g6)) + makeGroup("前三位组三",g3.length,g3,buildSubLevelHtml(g3));
 }
 
 window.onload = function(){

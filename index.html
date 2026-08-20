@@ -23,6 +23,7 @@ button:active{opacity:0.85;}
 .btn-green{background:#28a745;}
 .btn-orange{background:#fd7e14;}
 .btn-gray{background:#6c757d;}
+.btn-sm{padding:4px 8px;font-size:12px;margin-left:8px;}
 .group-title{padding:8px 10px;margin:6px 0;background:#f7f8fa;border-radius:6px;cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .group-title.active{border-bottom:2px solid #28a745;color:#198754;}
 .sub-group{margin-left:16px;display:none;}
@@ -66,18 +67,23 @@ button:active{opacity:0.85;}
     <div id="posWrap">
         <div class="row">
             <span>万位</span><div id="pos0" class="row"></div>
+            <button class="btn-sm btn-gray" data-pos="0">一键恢复默认</button>
         </div>
         <div class="row">
             <span>千位</span><div id="pos1" class="row"></div>
+            <button class="btn-sm btn-gray" data-pos="1">一键恢复默认</button>
         </div>
         <div class="row">
             <span>百位</span><div id="pos2" class="row"></div>
+            <button class="btn-sm btn-gray" data-pos="2">一键恢复默认</button>
         </div>
         <div class="row">
             <span>十位</span><div id="pos3" class="row"></div>
+            <button class="btn-sm btn-gray" data-pos="3">一键恢复默认</button>
         </div>
         <div class="row">
             <span>个位</span><div id="pos4" class="row"></div>
+            <button class="btn-sm btn-gray" data-pos="4">一键恢复默认</button>
         </div>
     </div>
 </div>
@@ -163,6 +169,20 @@ document.getElementById("groupContainer").addEventListener("click",function(e){
         titleEl.classList.toggle("active");
         const sub = titleEl.nextElementSibling;
         if(sub) sub.classList.toggle("show");
+    }
+})
+
+// 每一位一键恢复默认按钮事件
+document.querySelectorAll('[data-pos]').forEach(btn=>{
+    btn.onclick = function(){
+        const p = Number(this.dataset.pos);
+        for(let d=0;d<=9;d++){
+            // 如果是杀号状态(黄色/红色)不改动，只恢复普通蓝白
+            if(posDigitsStatus[p][d] !== "digit-yellow" && posDigitsStatus[p][d] !== "digit-red"){
+                posDigitsStatus[p][d] = "digit-blue";
+            }
+        }
+        renderPosBlock(p);
     }
 })
 

@@ -83,7 +83,7 @@ button:active{opacity:0.85;}
 </div>
 
 <div class="card">
-    <h3>和尾过滤（前三位和尾）</h3>
+    <h3>和尾过滤（前三位和尾）【蓝色=选中参与运算】</h3>
     <div id="heWeiWrap" class="row"></div>
     <div class="checkbox-wrap">
         <input type="checkbox" id="heWeiEnable" checked>
@@ -142,11 +142,11 @@ button:active{opacity:0.85;}
 let historyList = [];
 let posDigitsStatus = [[],[],[],[],[]];
 let generatedNumbers = [];
-let excludeHeWei = new Set();
+let selectHeWei = new Set(); // 和尾：存放选中参与运算
 let excludeQ3Sum = new Set();
 let excludeAllSum = new Set();
 
-// =========事件委托：统一处理所有动态复制按钮（核心修复）========
+// =========事件委托：统一处理所有动态复制按钮========
 document.getElementById("groupContainer").addEventListener("click",function(e){
     if(e.target.classList.contains("copy-btn")){
         e.stopPropagation();
@@ -202,21 +202,25 @@ function renderPosBlock(posIdx){
     })
 }
 
+// 和尾：蓝色=选中参与运算；白色=不参与过滤掉
 function initHeWei(){
     let wrap = document.getElementById("heWeiWrap");
     wrap.innerHTML = "";
+    selectHeWei.clear();
+    // 默认全部选中0‑9
+    for(let i=0;i<=9;i++) selectHeWei.add(i);
     for(let i=0;i<=9;i++){
         let div = document.createElement("div");
-        div.className = "digit-item digit-white";
+        div.className = "digit-item digit-blue";
         div.dataset.val = i;
         div.innerText = i;
         div.onclick = function(){
             let v = Number(this.dataset.val);
-            if(excludeHeWei.has(v)){
-                excludeHeWei.delete(v);
+            if(selectHeWei.has(v)){
+                selectHeWei.delete(v);
                 this.className = "digit-item digit-white";
             }else{
-                excludeHeWei.add(v);
+                selectHeWei.add(v);
                 this.className = "digit-item digit-blue";
             }
         }
@@ -429,12 +433,16 @@ document.getElementById("genBtn").onclick = function(){
                         let num = ""+w+q+b+s+g;
                         let arr = [w,q,b,s,g];
                         let sum3 = w+q+b;
+                        let hw = sum3 % 10;
                         let sumAll = w+q+b+s+g;
                         let minD = Math.min(...arr);
                         let maxD = Math.max(...arr);
                         let span = maxD-minD;
                         let ok = true;
-                        if(heWeiEnable && excludeHeWei.has(sum3%10)) ok=false;
+
+                        // 和尾过滤：启用时，只保留selectHeWei里面存在的和尾
+                        if(heWeiEnable && !selectHeWei.has(hw)) ok=false;
+
                         if(excludeQ3Sum.has(sum3)) ok=false;
                         if(excludeAllSum.has(sumAll)) ok=false;
                         if(spanEnable && (span<spanMin || span>spanMax)) ok=false;

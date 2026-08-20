@@ -12,12 +12,11 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;align-items:center;}
 .digit-item{width:42px;height:42px;border-radius:6px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;font-size:17px;cursor:pointer;user-select:none;transition:0.2s;}
-/*原始蓝色选中状态，新增四种业务状态 */
 .digit-blue{background:#007bff;color:#fff;}
 .digit-white{background:#ffffff;color:#333;}
-.digit-green{background:#28a745;color:#fff;}/*频次最高8位*/
-.digit-yellow{background:#ffc107;color:#222;}/*被杀号*/
-.digit-red{background:#dc3545;color:#fff;}/*最低频次同时被杀号*/
+.digit-green{background:#28a745;color:#fff;}
+.digit-yellow{background:#ffc107;color:#222;}
+.digit-red{background:#dc3545;color:#fff;}
 
 button{padding:8px 14px;border:none;border-radius:8px;background:#007bff;color:#fff;font-size:15px;cursor:pointer;margin:4px 2px;}
 button:active{opacity:0.85;}
@@ -141,15 +140,13 @@ textarea{width:100%;min-height:140px;padding:10px;border:1px solid #ddd;border-r
 </div>
 
 <script>
-//全局
 let historyList = [];
-let posDigitsStatus = [[],[],[],[],[]]; //5个位置 digit‑blue / white / green / yellow / red
+let posDigitsStatus = [[],[],[],[],[]];
 let generatedNumbers = [];
 let excludeHeWei = new Set();
 let excludeQ3Sum = new Set();
 let excludeAllSum = new Set();
 
-//初始化万千百十个数字块，默认全部蓝色选中
 function initPosBlocks(){
     for(let p=0;p<5;p++){
         let wrap = document.getElementById("pos"+p);
@@ -165,7 +162,6 @@ function initPosBlocks(){
             div.onclick = function(){
                 let pos = Number(this.dataset.pos);
                 let dig = Number(this.dataset.digit);
-                //杀号红色黄色不允许手动直接切换；普通蓝白可以点击切换
                 let st = posDigitsStatus[pos][dig];
                 if(st === "digit-yellow" || st === "digit-red") return;
                 if(st === "digit-blue") posDigitsStatus[pos][dig] = "digit-white";
@@ -185,7 +181,6 @@ function renderPosBlock(posIdx){
     })
 }
 
-//初始化和尾0‑9色块
 function initHeWei(){
     let wrap = document.getElementById("heWeiWrap");
     wrap.innerHTML = "";
@@ -207,7 +202,7 @@ function initHeWei(){
         wrap.appendChild(div);
     }
 }
-//初始化前三位和值0‑27
+
 function initQ3Sum(){
     let wrap = document.getElementById("q3SumWrap");
     wrap.innerHTML = "";
@@ -228,8 +223,17 @@ function initQ3Sum(){
         }
         wrap.appendChild(div);
     }
+    //默认排除前三位和值 0‑9
+    for(let x=0;x<=9;x++){
+        excludeQ3Sum.add(x);
+    }
+    //渲染选中样式
+    wrap.querySelectorAll(".digit-item").forEach(el=>{
+        let v = Number(el.dataset.val);
+        if(excludeQ3Sum.has(v)) el.className="digit-item digit-white";
+    })
 }
-//初始化五位和值0‑45
+
 function initAllSum(){
     let wrap = document.getElementById("allSumWrap");
     wrap.innerHTML = "";
@@ -250,9 +254,15 @@ function initAllSum(){
         }
         wrap.appendChild(div);
     }
+    //默认排除五位和值 0‑15，35‑45
+    for(let x=0;x<=15;x++) excludeAllSum.add(x);
+    for(let x=35;x<=45;x++) excludeAllSum.add(x);
+    wrap.querySelectorAll(".digit-item").forEach(el=>{
+        let v = Number(el.dataset.val);
+        if(excludeAllSum.has(v)) el.className="digit-item digit-white";
+    })
 }
 
-//差5，和9映射
 function getDiff5(v){
     const map = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
     return map[v];
@@ -262,13 +272,11 @@ function getSum9(v){
     return map[v];
 }
 
-//获取历史数据
 document.getElementById("fetchDataBtn").onclick = async function(){
     this.innerText="请求中...";
     try{
         const resp = await fetch("/api/p5?offset=0");
         const json = await resp.json();
-        //回填上期开奖输入框
         if(json.data && json.data.list && json.data.list.length>0){
             const firstItem = json.data.list[0];
             let cleanNum = firstItem.number.replace(/\s/g,'');
@@ -281,7 +289,6 @@ document.getElementById("fetchDataBtn").onclick = async function(){
     this.innerText="一键获取近100期排列五";
 }
 
-//解析数据按钮
 document.getElementById("parseDataBtn").onclick = async function(){
     try{
         const resp = await fetch("/api/p5?offset=0");
@@ -301,7 +308,6 @@ document.getElementById("parseDataBtn").onclick = async function(){
             return;
         }
         alert("解析完成，共"+historyList.length+"期");
-        //统计每个位置0‑9频次
         let freq = [[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]];
         historyList.forEach(rec=>{
             for(let p=0;p<5;p++){
@@ -309,7 +315,6 @@ document.getElementById("parseDataBtn").onclick = async function(){
                 freq[p][d]++;
             }
         })
-        //重置全部蓝色，再把频次最高8改为绿色
         for(let p=0;p<5;p++){
             for(let d=0;d<=9;d++) posDigitsStatus[p][d]="digit-blue";
             let arr = [];
@@ -325,7 +330,6 @@ document.getElementById("parseDataBtn").onclick = async function(){
     }
 }
 
-//执行杀号
 document.getElementById("execKillBtn").onclick = function(){
     const lastVal = document.getElementById("lastDrawInput").value.trim();
     if(lastVal.length!==5){
@@ -338,7 +342,6 @@ document.getElementById("execKillBtn").onclick = function(){
         alert("至少勾选一套杀号");
         return;
     }
-    //清除旧黄红状态，保留蓝/绿
     for(let p=0;p<5;p++){
         for(let d=0;d<=9;d++){
             if(posDigitsStatus[p][d]==="digit-yellow" || posDigitsStatus[p][d]==="digit-red"){
@@ -346,13 +349,11 @@ document.getElementById("execKillBtn").onclick = function(){
             }
         }
     }
-    //计算每个位置杀号
     for(let p=0;p<5;p++){
         const currDigit = Number(lastVal[p]);
         let killSet = new Set();
         if(useD5) killSet.add(getDiff5(currDigit));
         if(useS9) killSet.add(getSum9(currDigit));
-        //统计本位置频次，判断最低2位
         let freqArr = new Array(10).fill(0);
         historyList.forEach(rec=>{
             let dv = Number(rec.num[p]);
@@ -374,7 +375,6 @@ document.getElementById("execKillBtn").onclick = function(){
     alert("杀号执行完毕");
 }
 
-//清空重置按钮
 document.getElementById("clearQ3Sum").onclick = function(){
     excludeQ3Sum.clear();
     initQ3Sum();
@@ -388,9 +388,7 @@ document.getElementById("clearAllSum").onclick = function(){
     initAllSum();
 }
 
-//生成号码
 document.getElementById("genBtn").onclick = function(){
-    //收集允许数字：蓝/绿允许；黄红排除
     let posAllow = [[],[],[],[],[]];
     for(let p=0;p<5;p++){
         for(let d=0;d<=9;d++){
@@ -430,14 +428,12 @@ document.getElementById("genBtn").onclick = function(){
     buildGroupHtml(generatedNumbers);
 }
 
-//复制全部结果
 document.getElementById("copyAllBtn").onclick = function(){
     if(!generatedNumbers.length){alert("暂无号码");return;}
-    navigator.clipboard.writeText(generatedNumbers.join("\n"));
-    alert("已复制全部结果");
+    navigator.clipboard.writeText(generatedNumbers.join(":"));
+    alert("已复制全部结果（冒号分隔）");
 }
 
-//号码验证
 document.getElementById("verifyBtn").onclick = function(){
     let v = document.getElementById("verifyInput").value.trim();
     if(v.length!==5){alert("请输入5位号码");return;}
@@ -449,7 +445,6 @@ document.getElementById("verifyBtn").onclick = function(){
     }
 }
 
-//分组渲染
 function buildGroupHtml(numList){
     const container = document.getElementById("groupContainer");
     container.innerHTML="";
@@ -480,8 +475,8 @@ function buildGroupHtml(numList){
         const copyBtn = div.querySelector(".copy-btn");
         copyBtn.onclick = e=>{
             e.stopPropagation();
-            navigator.clipboard.writeText(numArr.join("\n"));
-            alert("已复制");
+            navigator.clipboard.writeText(numArr.join(":"));
+            alert("已复制（冒号分隔）");
         }
         titleEl.onclick = ()=>{
             titleEl.classList.toggle("active");
@@ -554,8 +549,8 @@ function buildGroupHtml(numList){
         const cpBtn = divWrap.querySelector(".copy-btn");
         cpBtn.onclick = (e)=>{
             e.stopPropagation();
-            navigator.clipboard.writeText(numArr.join("\n"));
-            alert("已复制");
+            navigator.clipboard.writeText(numArr.join(":"));
+            alert("已复制（冒号分隔）");
         }
         tEl.onclick = function(){
             tEl.classList.toggle("active");
@@ -583,8 +578,8 @@ function buildGroupHtml(numList){
                         const lab = b.parentElement.querySelector("span").innerText;
                         const key = lab.charAt(0);
                         const subArr = numArr.filter(x=>x[0]===key);
-                        navigator.clipboard.writeText(subArr.join("\n"));
-                        alert("已复制");
+                        navigator.clipboard.writeText(subArr.join(":"));
+                        alert("已复制（冒号分隔）");
                     }
                 })
             }

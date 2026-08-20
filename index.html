@@ -277,7 +277,8 @@ document.getElementById("fetchHist").onclick = async function(){
   fetchBtn.classList.add("gray");
 
   historyDataList = [];
-  tip.innerText = "正在请求100期历史数据...";
+  const totalPage = 5;
+  const perPageSize = 20;
 
   function fetchWithTimeout(url, timeoutMs = 12000) {
     return Promise.race([
@@ -285,13 +286,30 @@ document.getElementById("fetchHist").onclick = async function(){
       new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeoutMs))
     ]);
   }
+  function sleep(ms){
+    return new Promise(resolve=>setTimeout(resolve,ms));
+  }
 
   try{
-    const r = await fetchWithTimeout(`/api/p5`,12000);
-    const json = await r.json();
-    if(json.code===1 && json.data && json.data.list){
-      historyDataList = json.data.list;
+    for(let page=1; page <= totalPage; page++){
+      tip.innerText = `正在分批获取：第${page}/${totalPage}页，已拿到${historyDataList.length}期`;
+      const r = await fetchWithTimeout(`/api/p5?page=${page}&size=${perPageSize}`,12000);
+      const json = await r.json();
+      if(json.code===1 && json.data && json.data.list && Array.isArray(json.data.list)){
+        historyDataList = historyDataList.concat(json.data.list);
+      }
+      await sleep(350);
     }
+
+    //期号去重
+    const mapIssue = new Map();
+    historyDataList.forEach(item=>{
+      if(item && item.issue) mapIssue.set(item.issue, item);
+    })
+    historyDataList = Array.from(mapIssue.values());
+    //倒序，最新在前
+    historyDataList.sort((a,b)=>Number(b.issue)-Number(a.issue));
+
   }catch(err){
     console.error("获取数据失败",err);
     tip.innerText="请求超时/失败，请检查worker代理";
@@ -302,12 +320,12 @@ document.getElementById("fetchHist").onclick = async function(){
     const latest = historyDataList[0].lottery_num.trim();
     document.getElementById("lastNum").value = latest;
     tip.innerText=`✅ 已载入${historyDataList.length}期，可点【解析数据】`;
+    parseBtn.disabled = false;
   }else{
     tip.innerText="⚠️没有获取到开奖数据";
   }
 
   fetchBtn.disabled = false;
-  parseBtn.disabled = false;
   fetchBtn.classList.remove("gray");
 }
 

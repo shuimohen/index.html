@@ -186,17 +186,17 @@ function initHeWei(){
     wrap.innerHTML = "";
     for(let i=0;i<=9;i++){
         let div = document.createElement("div");
-        div.className = "digit-item digit-blue";
+        div.className = "digit-item digit-white";
         div.dataset.val = i;
         div.innerText = i;
         div.onclick = function(){
             let v = Number(this.dataset.val);
             if(excludeHeWei.has(v)){
                 excludeHeWei.delete(v);
-                this.className = "digit-item digit-blue";
+                this.className = "digit-item digit-white";
             }else{
                 excludeHeWei.add(v);
-                this.className = "digit-item digit-white";
+                this.className = "digit-item digit-blue";
             }
         }
         wrap.appendChild(div);
@@ -208,29 +208,27 @@ function initQ3Sum(){
     wrap.innerHTML = "";
     for(let i=0;i<=27;i++){
         let div = document.createElement("div");
-        div.className = "digit-item digit-blue";
+        div.className = "digit-item digit-white";
         div.dataset.val = i;
         div.innerText = i;
         div.onclick = function(){
             let v = Number(this.dataset.val);
             if(excludeQ3Sum.has(v)){
                 excludeQ3Sum.delete(v);
-                this.className = "digit-item digit-blue";
+                this.className = "digit-item digit-white";
             }else{
                 excludeQ3Sum.add(v);
-                this.className = "digit-item digit-white";
+                this.className = "digit-item digit-blue";
             }
         }
         wrap.appendChild(div);
     }
-    //默认排除前三位和值 0‑9
-    for(let x=0;x<=9;x++){
-        excludeQ3Sum.add(x);
-    }
-    //渲染选中样式
+    //默认排除前三位和值：0‑9，24‑27
+    for(let x=0;x<=9;x++) excludeQ3Sum.add(x);
+    for(let x=24;x<=27;x++) excludeQ3Sum.add(x);
     wrap.querySelectorAll(".digit-item").forEach(el=>{
         let v = Number(el.dataset.val);
-        if(excludeQ3Sum.has(v)) el.className="digit-item digit-white";
+        if(excludeQ3Sum.has(v)) el.className="digit-item digit-blue";
     })
 }
 
@@ -239,17 +237,17 @@ function initAllSum(){
     wrap.innerHTML = "";
     for(let i=0;i<=45;i++){
         let div = document.createElement("div");
-        div.className = "digit-item digit-blue";
+        div.className = "digit-item digit-white";
         div.dataset.val = i;
         div.innerText = i;
         div.onclick = function(){
             let v = Number(this.dataset.val);
             if(excludeAllSum.has(v)){
                 excludeAllSum.delete(v);
-                this.className = "digit-item digit-blue";
+                this.className = "digit-item digit-white";
             }else{
                 excludeAllSum.add(v);
-                this.className = "digit-item digit-white";
+                this.className = "digit-item digit-blue";
             }
         }
         wrap.appendChild(div);
@@ -259,7 +257,7 @@ function initAllSum(){
     for(let x=35;x<=45;x++) excludeAllSum.add(x);
     wrap.querySelectorAll(".digit-item").forEach(el=>{
         let v = Number(el.dataset.val);
-        if(excludeAllSum.has(v)) el.className="digit-item digit-white";
+        if(excludeAllSum.has(v)) el.className="digit-item digit-blue";
     })
 }
 
@@ -460,29 +458,28 @@ function buildGroupHtml(numList){
     })
 
     function makeGroupDom(title,count,childHtml,numArr){
-        let div = document.createElement("div");
-        div.className = "group-item";
-        div.innerHTML = `
-            <div class="group-title">
-                <span>${title}</span>
-                <span class="count-badge">(${count}注)</span>
-                <span class="copy-btn">复制全部</span>
-            </div>
-            <div class="sub-group">${childHtml}</div>
-        `;
-        const titleEl = div.querySelector(".group-title");
-        const subEl = div.querySelector(".sub-group");
-        const copyBtn = div.querySelector(".copy-btn");
-        copyBtn.onclick = e=>{
+        let wrapDiv = document.createElement("div");
+        wrapDiv.className="group-item";
+        let titleDiv = document.createElement("div");
+        titleDiv.className="group-title";
+        titleDiv.innerHTML = `<span>${title}</span><span class="count-badge">(${count}注)</span><span class="copy-btn">复制全部</span>`;
+        let subDiv = document.createElement("div");
+        subDiv.className="sub-group";
+        subDiv.innerHTML = childHtml;
+        wrapDiv.appendChild(titleDiv);
+        wrapDiv.appendChild(subDiv);
+
+        const cp = titleDiv.querySelector(".copy-btn");
+        cp.onclick = (e)=>{
             e.stopPropagation();
             navigator.clipboard.writeText(numArr.join(":"));
             alert("已复制（冒号分隔）");
         }
-        titleEl.onclick = ()=>{
-            titleEl.classList.toggle("active");
-            subEl.classList.toggle("show");
+        titleDiv.onclick = ()=>{
+            titleDiv.classList.toggle("active");
+            subDiv.classList.toggle("show");
         }
-        return div;
+        return wrapDiv;
     }
 
     function getGroupByType(list){
@@ -510,81 +507,89 @@ function buildGroupHtml(numList){
             {k:"g10",name:"组10"},
             {k:"g5",name:"组5"},
         ]
-        let html = `<div class="two-col">`;
+        let outer = document.createElement("div");
+        outer.className="two-col";
         names.forEach(ni=>{
             const arr = g[ni.k];
-            html += `<div class="group-item">
-                <div class="group-title">
-                    <span>${ni.name}</span>
-                    <span class="count-badge">(${arr.length}注)</span>
-                    <span class="copy-btn">复制全部</span>
-                </div>
-                <div class="sub-group">`;
+            let itemDom = document.createElement("div");
+            itemDom.className="group-item";
+            let tDiv = document.createElement("div");
+            tDiv.className="group-title";
+            tDiv.innerHTML = `<span>${ni.name}</span><span class="count-badge">(${arr.length}注)</span><span class="copy-btn">复制全部</span>`;
+            let sDiv = document.createElement("div");
+            sDiv.className="sub-group";
+
             const l02 = arr.filter(x=>["0","1","2"].includes(x[0]));
             const l35 = arr.filter(x=>["3","4","5"].includes(x[0]));
             const l68 = arr.filter(x=>["6","7","8"].includes(x[0]));
             const l9 = arr.filter(x=>x[0]==="9");
-            html += renderThirdLevel("0‑2开头",l02);
-            html += renderThirdLevel("3‑5开头",l35);
-            html += renderThirdLevel("6‑8开头",l68);
-            html += renderThirdLevel("9开头",l9);
-            html += `</div></div>`;
+
+            sDiv.appendChild(renderThirdLevel("0‑2开头",l02));
+            sDiv.appendChild(renderThirdLevel("3‑5开头",l35));
+            sDiv.appendChild(renderThirdLevel("6‑8开头",l68));
+            sDiv.appendChild(renderThirdLevel("9开头",l9));
+
+            itemDom.appendChild(tDiv);
+            itemDom.appendChild(sDiv);
+            outer.appendChild(itemDom);
+
+            const cBtn = tDiv.querySelector(".copy-btn");
+            cBtn.onclick=(e)=>{
+                e.stopPropagation();
+                navigator.clipboard.writeText(arr.join(":"));
+                alert("已复制（冒号分隔）");
+            }
+            tDiv.onclick=()=>{
+                tDiv.classList.toggle("active");
+                sDiv.classList.toggle("show");
+            }
         })
-        html += "</div>";
-        return html;
+        return outer.outerHTML;
     }
 
     function renderThirdLevel(title,numArr){
-        let divWrap = document.createElement("div");
-        divWrap.innerHTML = `
-            <div class="group-title">
-                <span>${title}</span>
-                <span class="count-badge">(${numArr.length}注)</span>
-                <span class="copy-btn">复制全部</span>
-            </div>
-            <div class="sub-group"></div>
-        `;
-        const tEl = divWrap.querySelector(".group-title");
-        const sEl = divWrap.querySelector(".sub-group");
-        const cpBtn = divWrap.querySelector(".copy-btn");
+        let wrap = document.createElement("div");
+        wrap.className="group-item";
+        let tDiv = document.createElement("div");
+        tDiv.className="group-title";
+        tDiv.innerHTML = `<span>${title}</span><span class="count-badge">(${numArr.length}注)</span><span class="copy-btn">复制全部</span>`;
+        let sDiv = document.createElement("div");
+        sDiv.className="sub-group";
+        wrap.appendChild(tDiv);
+        wrap.appendChild(sDiv);
+
+        const cpBtn = tDiv.querySelector(".copy-btn");
         cpBtn.onclick = (e)=>{
             e.stopPropagation();
             navigator.clipboard.writeText(numArr.join(":"));
             alert("已复制（冒号分隔）");
         }
-        tEl.onclick = function(){
-            tEl.classList.toggle("active");
-            sEl.classList.toggle("show");
-            if(sEl.classList.contains("show") && sEl.innerHTML===""){
+        tDiv.onclick = function(){
+            tDiv.classList.toggle("active");
+            sDiv.classList.toggle("show");
+            if(sDiv.classList.contains("show") && sDiv.innerHTML===""){
                 let groupMap = {};
                 numArr.forEach(n=>{
                     let first = n[0];
                     if(!groupMap[first]) groupMap[first]=[];
                     groupMap[first].push(n);
                 })
-                let subHtml = "";
                 Object.keys(groupMap).sort().forEach(k=>{
                     let subArr = groupMap[k];
-                    subHtml += `<div class="group-title">
-                        <span>${k}开头</span>
-                        <span class="count-badge">(${subArr.length}注)</span>
-                        <span class="copy-btn">复制全部</span>
-                    </div>`;
-                })
-                sEl.innerHTML = subHtml;
-                sEl.querySelectorAll(".copy-btn").forEach(b=>{
-                    b.onclick = (e)=>{
+                    let subTitle = document.createElement("div");
+                    subTitle.className="group-title";
+                    subTitle.innerHTML = `<span>${k}开头</span><span class="count-badge">(${subArr.length}注)</span><span class="copy-btn">复制全部</span>`;
+                    sDiv.appendChild(subTitle);
+                    let subCp = subTitle.querySelector(".copy-btn");
+                    subCp.onclick=(e)=>{
                         e.stopPropagation();
-                        const lab = b.parentElement.querySelector("span").innerText;
-                        const key = lab.charAt(0);
-                        const subArr = numArr.filter(x=>x[0]===key);
                         navigator.clipboard.writeText(subArr.join(":"));
                         alert("已复制（冒号分隔）");
                     }
                 })
             }
         }
-        return divWrap.outerHTML;
+        return wrap;
     }
 
     const g6Dom = makeGroupDom("前三位组六",g6.length,buildSubLevel(g6),g6);

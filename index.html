@@ -12,16 +12,18 @@ body{background:#f0f2f5;padding:12px;max-width:960px;margin:0 auto;}
 .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;align-items:center;}
 .digit-item{width:42px;height:42px;border-radius:6px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;font-size:17px;cursor:pointer;user-select:none;transition:0.2s;}
-/*状态颜色*/
+/*原始蓝色选中状态，新增四种业务状态 */
+.digit-blue{background:#007bff;color:#fff;}
 .digit-white{background:#ffffff;color:#333;}
 .digit-green{background:#28a745;color:#fff;}/*频次最高8位*/
 .digit-yellow{background:#ffc107;color:#222;}/*被杀号*/
 .digit-red{background:#dc3545;color:#fff;}/*最低频次同时被杀号*/
-input[type="number"]{width:70px;padding:6px;border:1px solid #ccc;border-radius:6px;font-size:15px;}
+
 button{padding:8px 14px;border:none;border-radius:8px;background:#007bff;color:#fff;font-size:15px;cursor:pointer;margin:4px 2px;}
 button:active{opacity:0.85;}
 .btn-green{background:#28a745;}
 .btn-orange{background:#fd7e14;}
+.btn-gray{background:#6c757d;}
 .group-title{padding:8px 10px;margin:6px 0;background:#f7f8fa;border-radius:6px;cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .group-title.active{border-bottom:2px solid #28a745;color:#198754;}
 .sub-group{margin-left:16px;display:none;}
@@ -39,109 +41,135 @@ textarea{width:100%;min-height:140px;padding:10px;border:1px solid #ddd;border-r
 </head>
 <body>
 <div class="card">
-    <h3>排列五历史数据</h3>
+    <h3>历史数据获取</h3>
     <div class="row">
-        <button id="fetchDataBtn">一键获取近100期</button>
-        <button id="parseDataBtn" class="btn-green">解析数据</button>
+        <button id="fetchDataBtn">一键获取近100期排列五</button>
+        <button id="parseDataBtn" class="btn-gray">解析数据</button>
     </div>
-    <textarea id="rawDataArea" placeholder="接口返回原始JSON数据"></textarea>
+    <div class="row">
+        <label>上期开奖(5位):</label>
+        <input id="lastDrawInput" type="text" maxlength="5" style="width:140px;">
+        <button id="execKillBtn">执行差5/和9杀号</button>
+    </div>
+    <div class="row">
+        <div class="checkbox-wrap">
+            <input type="checkbox" id="useDiff5" checked>
+            <label for="useDiff5">启用【差5恒值杀号】</label>
+        </div>
+        <div class="checkbox-wrap">
+            <input type="checkbox" id="useSum9" checked>
+            <label for="useSum9">启用【和9恒值杀号】</label>
+        </div>
+    </div>
 </div>
 
 <div class="card">
-    <h3>万千百十个 可选号码池</h3>
+    <h3>万｜千｜百｜十｜个 可选数字(点击色块切换蓝选)</h3>
     <div id="posWrap">
         <div class="row">
-            <span>万位：</span><div id="pos0" class="row"></div>
+            <span>万位</span><div id="pos0" class="row"></div>
         </div>
         <div class="row">
-            <span>千位：</span><div id="pos1" class="row"></div>
+            <span>千位</span><div id="pos1" class="row"></div>
         </div>
         <div class="row">
-            <span>百位：</span><div id="pos2" class="row"></div>
+            <span>百位</span><div id="pos2" class="row"></div>
         </div>
         <div class="row">
-            <span>十位：</span><div id="pos3" class="row"></div>
+            <span>十位</span><div id="pos3" class="row"></div>
         </div>
         <div class="row">
-            <span>个位：</span><div id="pos4" class="row"></div>
+            <span>个位</span><div id="pos4" class="row"></div>
         </div>
-    </div>
-    <div class="row">
-        <div class="checkbox-wrap">
-            <input type="checkbox" id="useDiff5">
-            <label for="useDiff5">启用差5恒值杀号</label>
-        </div>
-        <div class="checkbox-wrap">
-            <input type="checkbox" id="useSum9">
-            <label for="useSum9">启用和9恒值杀号</label>
-        </div>
-        <button id="execKillBtn" class="btn-orange">执行杀号</button>
     </div>
 </div>
 
 <div class="card">
-    <h3>过滤条件</h3>
-    <div class="row">
-        <label>前三位和尾：</label>
-        <input type="number" id="q3HeWei" min="0" max="9" placeholder="0‑9">
-    </div>
-    <div class="row">
-        <label>排除前三位和值：</label>
-        <input type="number" id="q3Min" min="0" max="27" placeholder="最小">
-        <span>‑</span>
-        <input type="number" id="q3Max" min="0" max="27" placeholder="最大">
-    </div>
-    <div class="row">
-        <label>排除五位和值：</label>
-        <input type="number" id="allMin" min="0" max="45" placeholder="最小">
-        <span>‑</span>
-        <input type="number" id="allMax" min="0" max="45" placeholder="最大">
-    </div>
-    <div class="row">
-        <label>五位跨度筛选：</label>
-        <input type="number" id="spanMin" min="0" max="9" placeholder="最小">
-        <span>‑</span>
-        <input type="number" id="spanMax" min="0" max="9" placeholder="最大">
-    </div>
-    <div class="row">
-        <button id="genBtn">生成条件号码</button>
+    <h3>和尾过滤（前三位和尾）</h3>
+    <div id="heWeiWrap" class="row"></div>
+    <div class="checkbox-wrap">
+        <input type="checkbox" id="heWeiEnable" checked>
+        <label>启用筛选:</label>
     </div>
 </div>
 
 <div class="card">
-    <h3>分组结果</h3>
+    <h3>排除前三位和值 (0‑27)</h3>
+    <div id="q3SumWrap" class="row"></div>
+    <div class="row">
+        <button id="clearQ3Sum" class="btn-gray">清空全部排除和值</button>
+        <button id="resetQ3Sum" class="btn-gray">重置和局</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>排除五位和值 (0‑45)</h3>
+    <div id="allSumWrap" class="row"></div>
+    <div class="row">
+        <button id="clearAllSum" class="btn-gray">清空全部排除五位和值</button>
+    </div>
+</div>
+
+<div class="card">
+    <h3>五位跨度筛选 (号码最大值‑最小值，范围0‑9)</h3>
+    <div class="row">
+        <label>最小跨度:</label>
+        <input id="spanMin" type="number" min="0" max="9" value="0" style="width:80px;">
+        <label>最大跨度:</label>
+        <input id="spanMax" type="number" min="0" max="9" value="9" style="width:80px;">
+        <div class="checkbox-wrap">
+            <input type="checkbox" id="spanEnable" checked>
+            <label>启用跨度:</label>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="row">
+        <button id="genBtn" class="btn-green">生成符合条件号码</button>
+        <button id="copyAllBtn">复制全部结果</button>
+    </div>
     <div id="groupContainer"></div>
 </div>
 
-<script>
-// 全局变量
-let historyList = [];
-let posDigitsStatus = [[],[],[],[],[]]; //5个位置，每个0‑9状态 white/green/yellow/red
-let generatedNumbers = [];
+<div class="card">
+    <h3>号码验证</h3>
+    <div class="row">
+        <input id="verifyInput" placeholder="输入5位号码验证" maxlength="5" style="width:220px;">
+        <button id="verifyBtn">验证号码</button>
+    </div>
+</div>
 
-// 初始化每个位置0‑9数字块
+<script>
+//全局
+let historyList = [];
+let posDigitsStatus = [[],[],[],[],[]]; //5个位置 digit‑blue / white / green / yellow / red
+let generatedNumbers = [];
+let excludeHeWei = new Set();
+let excludeQ3Sum = new Set();
+let excludeAllSum = new Set();
+
+//初始化万千百十个数字块，默认全部蓝色选中
 function initPosBlocks(){
     for(let p=0;p<5;p++){
         let wrap = document.getElementById("pos"+p);
         wrap.innerHTML = "";
         posDigitsStatus[p] = [];
         for(let d=0;d<=9;d++){
-            posDigitsStatus[p][d] = "digit-white";
+            posDigitsStatus[p][d] = "digit-blue";
             let div = document.createElement("div");
             div.className = "digit-item "+posDigitsStatus[p][d];
             div.dataset.pos = p;
             div.dataset.digit = d;
             div.innerText = d;
             div.onclick = function(){
-                //手动切换，只在white/green之间切换，杀号由执行杀号生成
                 let pos = Number(this.dataset.pos);
                 let dig = Number(this.dataset.digit);
-                if(posDigitsStatus[pos][dig]==="digit-yellow" || posDigitsStatus[pos][dig]==="digit-red") return;
-                if(posDigitsStatus[pos][dig]==="digit-green"){
-                    posDigitsStatus[pos][dig]="digit-white";
-                }else{
-                    posDigitsStatus[pos][dig]="digit-green";
-                }
+                //杀号红色黄色不允许手动直接切换；普通蓝白可以点击切换
+                let st = posDigitsStatus[pos][dig];
+                if(st === "digit-yellow" || st === "digit-red") return;
+                if(st === "digit-blue") posDigitsStatus[pos][dig] = "digit-white";
+                else posDigitsStatus[pos][dig] = "digit-blue";
                 renderPosBlock(pos);
             }
             wrap.appendChild(div);
@@ -157,129 +185,183 @@ function renderPosBlock(posIdx){
     })
 }
 
-// 差5配对 0↔5,1↔6,2↔7,3↔8,4↔9
+//初始化和尾0‑9色块
+function initHeWei(){
+    let wrap = document.getElementById("heWeiWrap");
+    wrap.innerHTML = "";
+    for(let i=0;i<=9;i++){
+        let div = document.createElement("div");
+        div.className = "digit-item digit-blue";
+        div.dataset.val = i;
+        div.innerText = i;
+        div.onclick = function(){
+            let v = Number(this.dataset.val);
+            if(excludeHeWei.has(v)){
+                excludeHeWei.delete(v);
+                this.className = "digit-item digit-blue";
+            }else{
+                excludeHeWei.add(v);
+                this.className = "digit-item digit-white";
+            }
+        }
+        wrap.appendChild(div);
+    }
+}
+//初始化前三位和值0‑27
+function initQ3Sum(){
+    let wrap = document.getElementById("q3SumWrap");
+    wrap.innerHTML = "";
+    for(let i=0;i<=27;i++){
+        let div = document.createElement("div");
+        div.className = "digit-item digit-blue";
+        div.dataset.val = i;
+        div.innerText = i;
+        div.onclick = function(){
+            let v = Number(this.dataset.val);
+            if(excludeQ3Sum.has(v)){
+                excludeQ3Sum.delete(v);
+                this.className = "digit-item digit-blue";
+            }else{
+                excludeQ3Sum.add(v);
+                this.className = "digit-item digit-white";
+            }
+        }
+        wrap.appendChild(div);
+    }
+}
+//初始化五位和值0‑45
+function initAllSum(){
+    let wrap = document.getElementById("allSumWrap");
+    wrap.innerHTML = "";
+    for(let i=0;i<=45;i++){
+        let div = document.createElement("div");
+        div.className = "digit-item digit-blue";
+        div.dataset.val = i;
+        div.innerText = i;
+        div.onclick = function(){
+            let v = Number(this.dataset.val);
+            if(excludeAllSum.has(v)){
+                excludeAllSum.delete(v);
+                this.className = "digit-item digit-blue";
+            }else{
+                excludeAllSum.add(v);
+                this.className = "digit-item digit-white";
+            }
+        }
+        wrap.appendChild(div);
+    }
+}
+
+//差5，和9映射
 function getDiff5(v){
     const map = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
     return map[v];
 }
-// 和9配对 0↔9,1↔8,2↔7,3↔6,4↔5
 function getSum9(v){
     const map = {0:9,1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1,9:0};
     return map[v];
 }
 
-// 获取历史数据
+//获取历史数据
 document.getElementById("fetchDataBtn").onclick = async function(){
     this.innerText="请求中...";
     try{
-        //调用后端代理接口，Cloudflare functions /api/p5
         const resp = await fetch("/api/p5?offset=0");
         const json = await resp.json();
-        document.getElementById("rawDataArea").value = JSON.stringify(json,null,2);
+        //回填上期开奖输入框
+        if(json.data && json.data.list && json.data.list.length>0){
+            const firstItem = json.data.list[0];
+            let cleanNum = firstItem.number.replace(/\s/g,'');
+            document.getElementById("lastDrawInput").value = cleanNum;
+        }
         alert("获取成功，请点击解析数据");
     }catch(e){
         alert("获取失败："+e.message);
     }
-    this.innerText="一键获取近100期";
+    this.innerText="一键获取近100期排列五";
 }
 
-//解析数据按钮，重点处理去掉号码空格
-document.getElementById("parseDataBtn").onclick = function(){
-    let raw = document.getElementById("rawDataArea").value;
-    let json;
+//解析数据按钮
+document.getElementById("parseDataBtn").onclick = async function(){
     try{
-        json = JSON.parse(raw);
-    }catch(err){
-        alert("JSON解析错误");
-        return;
-    }
-    if(!json.data || !json.data.list || !Array.isArray(json.data.list)){
-        alert("没有拿到list数据");
-        return;
-    }
-    historyList = [];
-    json.data.list.forEach(item=>{
-        // 核心：清除全部空格，得到连续5位
-        let numClean = item.number.replace(/\s/g,'');
-        if(numClean.length!==5) return;
-        historyList.push({
-            issue:item.issueno,
-            num:numClean
+        const resp = await fetch("/api/p5?offset=0");
+        const json = await resp.json();
+        if(!json.data || !json.data.list || !Array.isArray(json.data.list)){
+            alert("接口返回无list");
+            return;
+        }
+        historyList = [];
+        json.data.list.forEach(item=>{
+            let numClean = item.number.replace(/\s/g,'');
+            if(numClean.length!==5) return;
+            historyList.push({issue:item.issueno, num:numClean});
         })
-    })
-    if(historyList.length===0){
-        alert("解析后无有效号码");
-        return;
-    }
-    alert("解析完成，共"+historyList.length+"期");
-
-    //统计每个位置0‑9频次
-    let freq = [[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]];
-    historyList.forEach(rec=>{
+        if(historyList.length===0){
+            alert("解析后无有效号码");
+            return;
+        }
+        alert("解析完成，共"+historyList.length+"期");
+        //统计每个位置0‑9频次
+        let freq = [[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0]];
+        historyList.forEach(rec=>{
+            for(let p=0;p<5;p++){
+                let d = Number(rec.num[p]);
+                freq[p][d]++;
+            }
+        })
+        //重置全部蓝色，再把频次最高8改为绿色
         for(let p=0;p<5;p++){
-            let d = Number(rec.num[p]);
-            freq[p][d]++;
+            for(let d=0;d<=9;d++) posDigitsStatus[p][d]="digit-blue";
+            let arr = [];
+            for(let d=0;d<=9;d++) arr.push({d:d,cnt:freq[p][d]});
+            arr.sort((a,b)=>b.cnt-a.cnt);
+            for(let i=0;i<8;i++){
+                posDigitsStatus[p][arr[i].d] = "digit-green";
+            }
+            renderPosBlock(p);
         }
-    })
-    //重置全部为白色
-    for(let p=0;p<5;p++){
-        for(let d=0;d<=9;d++) posDigitsStatus[p][d]="digit-white";
+    }catch(err){
+        alert("解析异常："+err.message);
     }
-    //每个位置取频次最高8个标记绿色
-    for(let p=0;p<5;p++){
-        let arr = [];
-        for(let d=0;d<=9;d++) arr.push({d: d, cnt:freq[p][d]});
-        arr.sort((a,b)=>b.cnt - a.cnt);
-        //最高8位绿色
-        for(let i=0;i<8;i++){
-            posDigitsStatus[p][arr[i].d] = "digit-green";
-        }
-        //最低2位，先保持白色，后面执行杀号时，如果被杀号则改为红色
-    }
-    for(let p=0;p<5;p++) renderPosBlock(p);
 }
 
 //执行杀号
 document.getElementById("execKillBtn").onclick = function(){
-    if(historyList.length===0){
-        alert("请先解析历史数据");
+    const lastVal = document.getElementById("lastDrawInput").value.trim();
+    if(lastVal.length!==5){
+        alert("上期开奖必须输入5位数字");
         return;
     }
     const useD5 = document.getElementById("useDiff5").checked;
     const useS9 = document.getElementById("useSum9").checked;
     if(!useD5 && !useS9){
-        alert("请至少勾选一套杀号规则");
+        alert("至少勾选一套杀号");
         return;
     }
-    //上期号码
-    const last = historyList[0].num;
-    //先把所有黄色红色清除，保留green/white
+    //清除旧黄红状态，保留蓝/绿
     for(let p=0;p<5;p++){
         for(let d=0;d<=9;d++){
             if(posDigitsStatus[p][d]==="digit-yellow" || posDigitsStatus[p][d]==="digit-red"){
-                posDigitsStatus[p][d] = "digit-white";
+                posDigitsStatus[p][d] = posDigitsStatus[p][d]==="digit-green"?"digit-green":"digit-blue";
             }
         }
     }
-    // 每个位置分别计算杀号
+    //计算每个位置杀号
     for(let p=0;p<5;p++){
-        const currDigit = Number(last[p]);
+        const currDigit = Number(lastVal[p]);
         let killSet = new Set();
         if(useD5) killSet.add(getDiff5(currDigit));
         if(useS9) killSet.add(getSum9(currDigit));
+        //统计本位置频次，判断最低2位
+        let freqArr = new Array(10).fill(0);
+        historyList.forEach(rec=>{
+            let dv = Number(rec.num[p]);
+            freqArr[dv]++;
+        })
+        let sortList = [];
+        for(let dd=0;dd<=9;dd++) sortList.push({d:dd,cnt:freqArr[dd]});
+        sortList.sort((a,b)=>a.cnt-b.cnt);
         killSet.forEach(kd=>{
-            //如果这个数字本来是最低频次，标记红色，否则黄色
-            let arr = [];
-            for(let dd=0;dd<=9;dd++) arr.push({d:dd,cnt:0});
-            //判断是否属于频次最低2位
-            let freqArr = [];
-            historyList.forEach(rec=>{
-                let dv = Number(rec.num[p]);
-                freqArr[dv] = (freqArr[dv]||0)+1;
-            })
-            let sortList = [];
-            for(let dd=0;dd<=9;dd++) sortList.push({d:dd,cnt:freqArr[dd]||0});
-            sortList.sort((a,b)=>a.cnt - b.cnt);
             const isLowFreq = (sortList[0].d===kd || sortList[1].d===kd);
             if(isLowFreq){
                 posDigitsStatus[p][kd] = "digit-red";
@@ -287,32 +369,41 @@ document.getElementById("execKillBtn").onclick = function(){
                 posDigitsStatus[p][kd] = "digit-yellow";
             }
         })
+        renderPosBlock(p);
     }
-    for(let p=0;p<5;p++) renderPosBlock(p);
-    alert("杀号完成");
+    alert("杀号执行完毕");
+}
+
+//清空重置按钮
+document.getElementById("clearQ3Sum").onclick = function(){
+    excludeQ3Sum.clear();
+    initQ3Sum();
+}
+document.getElementById("resetQ3Sum").onclick = function(){
+    excludeQ3Sum.clear();
+    initQ3Sum();
+}
+document.getElementById("clearAllSum").onclick = function(){
+    excludeAllSum.clear();
+    initAllSum();
 }
 
 //生成号码
 document.getElementById("genBtn").onclick = function(){
-    //收集每个位置允许的数字：状态为green white 允许；yellow red排除
+    //收集允许数字：蓝/绿允许；黄红排除
     let posAllow = [[],[],[],[],[]];
     for(let p=0;p<5;p++){
         for(let d=0;d<=9;d++){
             let st = posDigitsStatus[p][d];
-            if(st==="digit-green" || st==="digit-white") posAllow[p].push(d);
+            if(st==="digit-blue" || st==="digit-green") posAllow[p].push(d);
         }
     }
-    //读取过滤条件
-    const q3HeWei = document.getElementById("q3HeWei").value.trim();
-    const q3Min = Number(document.getElementById("q3Min").value||-1);
-    const q3Max = Number(document.getElementById("q3Max").value||-1);
-    const allMin = Number(document.getElementById("allMin").value||-1);
-    const allMax = Number(document.getElementById("allMax").value||-1);
-    const spanMin = Number(document.getElementById("spanMin").value||0);
-    const spanMax = Number(document.getElementById("spanMax").value||9);
+    const heWeiEnable = document.getElementById("heWeiEnable").checked;
+    const spanEnable = document.getElementById("spanEnable").checked;
+    const spanMin = Number(document.getElementById("spanMin").value);
+    const spanMax = Number(document.getElementById("spanMax").value);
 
     generatedNumbers = [];
-    //暴力组合
     for(let w of posAllow[0]){
         for(let q of posAllow[1]){
             for(let b of posAllow[2]){
@@ -320,21 +411,16 @@ document.getElementById("genBtn").onclick = function(){
                     for(let g of posAllow[4]){
                         let num = ""+w+q+b+s+g;
                         let arr = [w,q,b,s,g];
-                        //前三位和
                         let sum3 = w+q+b;
                         let sumAll = w+q+b+s+g;
-                        //跨度
                         let minD = Math.min(...arr);
                         let maxD = Math.max(...arr);
-                        let span = maxD - minD;
-
-                        //条件校验
+                        let span = maxD-minD;
                         let ok = true;
-                        if(q3HeWei!=="" && (sum3%10)!==Number(q3HeWei)) ok=false;
-                        if(q3Min!==-1 && q3Max!==-1 && (sum3>=q3Min && sum3<=q3Max)) ok=false;
-                        if(allMin!==-1 && allMax!==-1 && (sumAll>=allMin && sumAll<=allMax)) ok=false;
-                        if(span<spanMin || span>spanMax) ok=false;
-
+                        if(heWeiEnable && excludeHeWei.has(sum3%10)) ok=false;
+                        if(excludeQ3Sum.has(sum3)) ok=false;
+                        if(excludeAllSum.has(sumAll)) ok=false;
+                        if(spanEnable && (span<spanMin || span>spanMax)) ok=false;
                         if(ok) generatedNumbers.push(num);
                     }
                 }
@@ -344,26 +430,40 @@ document.getElementById("genBtn").onclick = function(){
     buildGroupHtml(generatedNumbers);
 }
 
+//复制全部结果
+document.getElementById("copyAllBtn").onclick = function(){
+    if(!generatedNumbers.length){alert("暂无号码");return;}
+    navigator.clipboard.writeText(generatedNumbers.join("\n"));
+    alert("已复制全部结果");
+}
+
+//号码验证
+document.getElementById("verifyBtn").onclick = function(){
+    let v = document.getElementById("verifyInput").value.trim();
+    if(v.length!==5){alert("请输入5位号码");return;}
+    let idx = generatedNumbers.indexOf(v);
+    if(idx>-1){
+        alert(`该号码在结果集合中，索引:${idx+1}`);
+    }else{
+        alert("不在生成结果内");
+    }
+}
+
 //分组渲染
 function buildGroupHtml(numList){
     const container = document.getElementById("groupContainer");
     container.innerHTML="";
-    //一级分组：前三位组六、前三位组三
     const g6 = [];
     const g3 = [];
     const rest = [];
     numList.forEach(n=>{
         let q3 = n.slice(0,3);
         let s = new Set(q3.split(''));
-        if(s.size===3){
-            g6.push(n);
-        }else if(s.size===2){
-            g3.push(n);
-        }else{
-            rest.push(n);
-        }
+        if(s.size===3) g6.push(n);
+        else if(s.size===2) g3.push(n);
+        else rest.push(n);
     })
-    //一级分组dom
+
     function makeGroupDom(title,count,childHtml,numArr){
         let div = document.createElement("div");
         div.className = "group-item";
@@ -378,19 +478,18 @@ function buildGroupHtml(numList){
         const titleEl = div.querySelector(".group-title");
         const subEl = div.querySelector(".sub-group");
         const copyBtn = div.querySelector(".copy-btn");
-        copyBtn.onclick = function(e){
+        copyBtn.onclick = e=>{
             e.stopPropagation();
             navigator.clipboard.writeText(numArr.join("\n"));
             alert("已复制");
         }
-        titleEl.onclick = function(){
+        titleEl.onclick = ()=>{
             titleEl.classList.toggle("active");
             subEl.classList.toggle("show");
         }
         return div;
     }
 
-    //二级分组：组120/60/30/20/10/5
     function getGroupByType(list){
         const out = {g120:[],g60:[],g30:[],g20:[],g10:[],g5:[]};
         list.forEach(num=>{
@@ -404,7 +503,7 @@ function buildGroupHtml(numList){
         })
         return out;
     }
-    //生成二级分组内部html，包含0‑2开头、3‑5开头、6‑8开头、9开头三级
+
     function buildSubLevel(list){
         if(list.length===0) return "<div style='padding:4px;color:#999'>无号码</div>";
         const g = getGroupByType(list);
@@ -426,7 +525,6 @@ function buildGroupHtml(numList){
                     <span class="copy-btn">复制全部</span>
                 </div>
                 <div class="sub-group">`;
-            //三级：0‑2开头，3‑5，6‑8，9开头
             const l02 = arr.filter(x=>["0","1","2"].includes(x[0]));
             const l35 = arr.filter(x=>["3","4","5"].includes(x[0]));
             const l68 = arr.filter(x=>["6","7","8"].includes(x[0]));
@@ -440,7 +538,7 @@ function buildGroupHtml(numList){
         html += "</div>";
         return html;
     }
-    //渲染三级分组，内部展开0开头、1开头、2开头等次次级
+
     function renderThirdLevel(title,numArr){
         let divWrap = document.createElement("div");
         divWrap.innerHTML = `
@@ -463,14 +561,13 @@ function buildGroupHtml(numList){
             tEl.classList.toggle("active");
             sEl.classList.toggle("show");
             if(sEl.classList.contains("show") && sEl.innerHTML===""){
-                //次次级
-                let subHtml = "";
                 let groupMap = {};
                 numArr.forEach(n=>{
                     let first = n[0];
                     if(!groupMap[first]) groupMap[first]=[];
                     groupMap[first].push(n);
                 })
+                let subHtml = "";
                 Object.keys(groupMap).sort().forEach(k=>{
                     let subArr = groupMap[k];
                     subHtml += `<div class="group-title">
@@ -480,7 +577,6 @@ function buildGroupHtml(numList){
                     </div>`;
                 })
                 sEl.innerHTML = subHtml;
-                //绑定次次级复制按钮
                 sEl.querySelectorAll(".copy-btn").forEach(b=>{
                     b.onclick = (e)=>{
                         e.stopPropagation();
@@ -502,9 +598,11 @@ function buildGroupHtml(numList){
     container.appendChild(g3Dom);
 }
 
-//页面初始化
 window.onload = function(){
     initPosBlocks();
+    initHeWei();
+    initQ3Sum();
+    initAllSum();
 }
 </script>
 </body>

@@ -12,20 +12,16 @@
         .wrap {max-width:740px;margin:0 auto;}
         .card {background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 5px rgba(0,0,0,0.1);}
         h3 {margin-bottom:12px;color:#222;font-size:18px;}
-
-        /* 修复：去掉gap，改用margin兼容全部Safari */
-        .num-wrap {display:flex;flex-wrap:wrap;margin:10px 0 -8px -8px;}
-        .num-btn {width:42px;height:42px;border-radius:8px;border:1px solid #aaa;font-size:18px;cursor:pointer;margin:0 8px 8px 8px;display:flex;align-items:center;justify-content:center;}
+        .num-wrap {display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
+        .num-btn {width:42px;height:42px;border-radius:8px;border:1px solid #aaa;font-size:18px;font-weight:bold;color:#222;cursor:pointer;display:flex;align-items:center;justify-content:center;}
         .num-btn.white {background:#ffffff;}
         .num-btn.blue {background:#b8d8ff;}
         .num-btn.green {background:#b8efc9;}
         .num-btn.red {background:#ffbcbc;}
-
         button {padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-size:14px;cursor:pointer;margin:3px;}
         button:active {background:#1d4ed8;}
         textarea {width:100%;min-height:130px;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;margin:8px 0;}
-        .row {display:flex;flex-wrap:wrap;margin:8px 0 -6px -6px;}
-        .row > * {margin:0 6px 6px 6px;}
+        .row {display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0;}
         label {font-size:14px;display:flex;align-items:center;}
         input[type="number"] {width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;}
         .history-item {font-size:13px;padding:4px 0;border-bottom:1px solid #eee;}
@@ -87,8 +83,8 @@ function renderNumPool(){
     const clsMap = ["white","blue","green","red"];
     numList.forEach(n=>{
         const btn = document.createElement("button");
-        btn.className = "num-btn " + clsMap[numState[n]];
-        btn.textContent = String(n);
+        btn.className = "num-btn "+clsMap[numState[n]];
+        btn.textContent = n;
         btn.onclick = ()=>{
             numState[n] = (numState[n]+1) %4;
             renderNumPool();

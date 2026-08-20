@@ -172,15 +172,12 @@ document.getElementById("groupContainer").addEventListener("click",function(e){
     }
 })
 
-// 每一位一键恢复默认按钮事件
+// 一键恢复默认：全部强制置为蓝色原始状态，覆盖绿色/黄色/红色/白色
 document.querySelectorAll('[data-pos]').forEach(btn=>{
     btn.onclick = function(){
         const p = Number(this.dataset.pos);
         for(let d=0;d<=9;d++){
-            // 如果是杀号状态(黄色/红色)不改动，只恢复普通蓝白
-            if(posDigitsStatus[p][d] !== "digit-yellow" && posDigitsStatus[p][d] !== "digit-red"){
-                posDigitsStatus[p][d] = "digit-blue";
-            }
+            posDigitsStatus[p][d] = "digit-blue";
         }
         renderPosBlock(p);
     }
@@ -202,7 +199,7 @@ function initPosBlocks(){
                 let pos = Number(this.dataset.pos);
                 let dig = Number(this.dataset.digit);
                 let st = posDigitsStatus[pos][dig];
-                if(st === "digit-yellow" || st === "digit-red") return;
+                // 移除杀号色块锁定，解析、杀号之后都允许手动点击切换蓝白
                 if(st === "digit-blue") posDigitsStatus[pos][dig] = "digit-white";
                 else posDigitsStatus[pos][dig] = "digit-blue";
                 renderPosBlock(pos);

@@ -142,11 +142,10 @@ button:active{opacity:0.85;}
 let historyList = [];
 let posDigitsStatus = [[],[],[],[],[]];
 let generatedNumbers = [];
-let selectHeWei = new Set(); // 和尾：存放选中参与运算
+let selectHeWei = new Set();
 let excludeQ3Sum = new Set();
 let excludeAllSum = new Set();
 
-// =========事件委托：统一处理所有动态复制按钮========
 document.getElementById("groupContainer").addEventListener("click",function(e){
     if(e.target.classList.contains("copy-btn")){
         e.stopPropagation();
@@ -156,10 +155,9 @@ document.getElementById("groupContainer").addEventListener("click",function(e){
             return;
         }
         const arr = JSON.parse(dataStr);
-        navigator.clipboard.writeText(arr.join(":"));
-        alert("已复制（冒号分隔）");
+        navigator.clipboard.writeText(arr.join(","));
+        alert("已复制（逗号分隔）");
     }
-    //分组展开收起
     const titleEl = e.target.closest(".group-title");
     if(titleEl && !e.target.classList.contains("copy-btn")){
         titleEl.classList.toggle("active");
@@ -202,12 +200,10 @@ function renderPosBlock(posIdx){
     })
 }
 
-// 和尾：蓝色=选中参与运算；白色=不参与过滤掉
 function initHeWei(){
     let wrap = document.getElementById("heWeiWrap");
     wrap.innerHTML = "";
     selectHeWei.clear();
-    // 默认全部选中0‑9
     for(let i=0;i<=9;i++) selectHeWei.add(i);
     for(let i=0;i<=9;i++){
         let div = document.createElement("div");
@@ -248,7 +244,6 @@ function initQ3Sum(){
         }
         wrap.appendChild(div);
     }
-    //默认排除前三位和值：0‑9，24‑27
     for(let x=0;x<=9;x++) excludeQ3Sum.add(x);
     for(let x=24;x<=27;x++) excludeQ3Sum.add(x);
     wrap.querySelectorAll(".digit-item").forEach(el=>{
@@ -277,7 +272,6 @@ function initAllSum(){
         }
         wrap.appendChild(div);
     }
-    //默认排除五位和值 0‑15，35‑45
     for(let x=0;x<=15;x++) excludeAllSum.add(x);
     for(let x=35;x<=45;x++) excludeAllSum.add(x);
     wrap.querySelectorAll(".digit-item").forEach(el=>{
@@ -440,7 +434,6 @@ document.getElementById("genBtn").onclick = function(){
                         let span = maxD-minD;
                         let ok = true;
 
-                        // 和尾过滤：启用时，只保留selectHeWei里面存在的和尾
                         if(heWeiEnable && !selectHeWei.has(hw)) ok=false;
 
                         if(excludeQ3Sum.has(sum3)) ok=false;
@@ -457,8 +450,8 @@ document.getElementById("genBtn").onclick = function(){
 
 document.getElementById("copyAllBtn").onclick = function(){
     if(!generatedNumbers.length){alert("暂无号码");return;}
-    navigator.clipboard.writeText(generatedNumbers.join(":"));
-    alert("已复制全部结果（冒号分隔）");
+    navigator.clipboard.writeText(generatedNumbers.join(","));
+    alert("已复制全部结果（逗号分隔）");
 }
 
 document.getElementById("verifyBtn").onclick = function(){
@@ -487,7 +480,6 @@ function getGroupByType(list){
     return out;
 }
 
-//生成完整分组html，号码数组存到data-numbers属性，委托事件读取
 function buildGroupHtml(numList){
     const container = document.getElementById("groupContainer");
     container.innerHTML="";
@@ -540,7 +532,6 @@ function buildGroupHtml(numList){
 
     function renderThirdHtml(title,numArr){
         let innerSub="";
-        //0开头、1开头子层级
         const map = {};
         numArr.forEach(n=>{
             let f = n[0];

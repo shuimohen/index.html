@@ -377,21 +377,26 @@ function getFrontThreeType(numStr){
   if(vals[0] === 2) return 'frontThree';
   return 'frontSix';
 }
-// =========【核心修复：交换g10和g5的返回类型】=========
+// =========【修复完成：严格分组判定函数】=========
 function getFiveGroup(numStr) {
   let cnt = {};
   for(let c of numStr) cnt[c] = (cnt[c]||0)+1;
   let counts = Object.values(cnt).sort((a,b)=>b-a);
+  //五同豹子
   if(counts[0] === 5) return 'g55';
-  if(counts[0] === 4) return 'g5';    //四条 → 存入g5
+  //四条 4+1
+  if(counts[0] === 4) return 'g5';
+  //3个相同
   if(counts[0] === 3) {
-    if(counts[1] === 2) return 'g10'; //3+2三二组合 →存入g10
-    return 'g20';
+    if(counts[1] === 2) return 'g10'; //3+2 三二组合
+    return 'g20'; //3+1+1 三条
   }
+  //最多2个相同
   if(counts[0] === 2) {
-    if(counts[1] === 2) return 'g30';
-    return 'g60';
+    if(counts[1] === 2) return 'g30'; //2+2+1 两对
+    return 'g60'; //2+1+1+1 一对
   }
+  //全部5个不同
   return 'g120';
 }
 // 界面文字保持不变

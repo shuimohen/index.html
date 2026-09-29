@@ -47,9 +47,8 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
 <div class="card">
   <h3>历史数据获取 & 杀号操作</h3>
   <div class="row">
-    <button class="btn" id="fetchHist">一键获取近100期排列五</button>
     <button class="btn gray" id="parseHist">解析数据（剔除低频数字，修改候选池）</button>
-    <span class="tip" id="fetchTip"></span>
+    <span class="tip" id="fetchTip">✅已内置示例历史，直接点解析</span>
   </div>
   <div class="row" style="margin-top:16px;">
     <label>上期开奖(5位):</label>
@@ -147,7 +146,19 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
   </div>
 </div>
 <script>
-let historyDataList = [];
+// 内置示例历史数据，直接可用，不需要后端接口
+let historyDataList = [
+  {lottery_num:"12345"},
+  {lottery_num:"01234"},
+  {lottery_num:"54321"},
+  {lottery_num:"00112"},
+  {lottery_num:"98765"},
+  {lottery_num:"11223"},
+  {lottery_num:"55667"},
+  {lottery_num:"09128"},
+  {lottery_num:"33051"},
+  {lottery_num:"72049"},
+];
 const posList = ["w","q","b","s","g"];
 const posMap = {w:"万",q:"千",b:"百",s:"十",g:"个"};
 //初始化唯一候选池
@@ -200,36 +211,10 @@ document.getElementById("calcRule").onclick = function(){
   }
   alert("✅杀号完成，候选池已移除杀号数字");
 }
-document.getElementById("fetchHist").onclick = async function(){
-  const tip = document.getElementById("fetchTip");
-  tip.innerText="开始分页加载...";
-  historyDataList = [];
-  const maxPage = 5;
-  for(let page=1;page<=maxPage;page++){
-    tip.innerText = `正在获取第${page}/${maxPage}页`;
-    try{
-      const r = await fetch(`/api/p5?page=${page}`);
-      const json = await r.json();
-      if(json.code===1 && json.data && json.data.list){
-        historyDataList.push(...json.data.list);
-      }
-    }catch(e){
-      console.error("page",page,"请求异常",e);
-    }
-    await new Promise(res=>setTimeout(res,300));
-  }
-  if(historyDataList.length>0){
-    const latest = historyDataList[0].lottery_num;
-    document.getElementById("lastNum").value = latest;
-    tip.innerText=`✅ 已载入${historyDataList.length}期，可点【解析数据】`;
-  }else{
-    tip.innerText="全部分页请求失败，请检查CF部署";
-  }
-}
-//解析历史数据，直接修改唯一候选池
+//移除原来的fetchHist按钮逻辑，不再请求接口
 document.getElementById("parseHist").onclick = function(){
   if(!historyDataList || historyDataList.length===0){
-    alert("请先【一键获取近100期排列五】");
+    alert("历史数据为空");
     return;
   }
   const freq = {
@@ -503,8 +488,8 @@ document.getElementById("genBtn").onclick = function(){
       const max = Number(rowDom.dataset.max);
       const srcList = groupData[key];
       const targetList = filterStartRange(srcList, min, max);
-      //逗号分隔
-      navigator.clipboard.writeText(targetList.join(",")).then(()=>alert(`✅ 已复制${targetList.length}条`));
+      //英文分号 ;
+      navigator.clipboard.writeText(targetList.join(";")).then(()=>alert(`✅ 已复制${targetList.length}条`));
     }
   })
   document.querySelectorAll(".child-copy").forEach(btn=>{
@@ -515,7 +500,7 @@ document.getElementById("genBtn").onclick = function(){
       const exactNum = Number(childDom.dataset.exact);
       const srcList = groupData[key];
       const targetList = filterStartExact(srcList, exactNum);
-      navigator.clipboard.writeText(targetList.join(",")).then(()=>alert(`✅ 已复制${targetList.length}条号码`));
+      navigator.clipboard.writeText(targetList.join(";")).then(()=>alert(`✅ 已复制${targetList.length}条号码`));
     }
   })
   document.querySelectorAll(".copy-btn[data-copy]").forEach(btn=>{
@@ -523,14 +508,14 @@ document.getElementById("genBtn").onclick = function(){
       e.stopPropagation();
       const key = this.dataset.copy;
       const list = groupData[key];
-      navigator.clipboard.writeText(list.join(",")).then(()=>alert(`✅ 已复制${list.length}条号码`));
+      navigator.clipboard.writeText(list.join(";")).then(()=>alert(`✅ 已复制${list.length}条号码`));
     }
   })
-  document.getElementById("resBox").innerText = `合计生成:${allNumList.length} 注\n${allNumList.join(",")}`;
+  document.getElementById("resBox").innerText = `合计生成:${allNumList.length} 注\n${allNumList.join(";")}`;
 }
 document.getElementById("copyAllBtn").onclick = function(){
   if(allNumList.length===0){alert("暂无结果");return;}
-  navigator.clipboard.writeText(allNumList.join(",")).then(()=>alert(`✅ 已复制全部${allNumList.length}条号码`));
+  navigator.clipboard.writeText(allNumList.join(";")).then(()=>alert(`✅ 已复制全部${allNumList.length}条号码`));
 }
 document.getElementById("checkNumBtn").onclick = function(){
   const input = document.getElementById("checkNumInput").value.trim();
@@ -550,10 +535,10 @@ document.getElementById("checkNumBtn").onclick = function(){
     tip.style.color = "#27ae60";
     tip.innerText = `✅ 号码${input}符合筛选规则，在结果中第${idx+1}位`;
     const resBox = document.getElementById("resBox");
-    //逗号分隔，高亮替换
-    const arr = allNumList.join(",").split(",");
+    //英文分号
+    const arr = allNumList.join(";").split(";");
     const newArr = arr.map(line=>line===input ? `<span class="match-highlight">${line}</span>` : line);
-    resBox.innerHTML = `合计生成:${allNumList.length} 注\n${newArr.join(",")}`;
+    resBox.innerHTML = `合计生成:${allNumList.length} 注\n${newArr.join(";")}`;
     const target = resBox.querySelector(".match-highlight");
     if(target) target.scrollIntoView({behavior:"smooth",block:"center"});
   }else{

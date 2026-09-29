@@ -503,7 +503,8 @@ document.getElementById("genBtn").onclick = function(){
       const max = Number(rowDom.dataset.max);
       const srcList = groupData[key];
       const targetList = filterStartRange(srcList, min, max);
-      navigator.clipboard.writeText(targetList.join("\n")).then(()=>alert(`✅ 已复制${targetList.length}条`));
+      //逗号分隔
+      navigator.clipboard.writeText(targetList.join(",")).then(()=>alert(`✅ 已复制${targetList.length}条`));
     }
   })
   document.querySelectorAll(".child-copy").forEach(btn=>{
@@ -514,7 +515,7 @@ document.getElementById("genBtn").onclick = function(){
       const exactNum = Number(childDom.dataset.exact);
       const srcList = groupData[key];
       const targetList = filterStartExact(srcList, exactNum);
-      navigator.clipboard.writeText(targetList.join("\n")).then(()=>alert(`✅ 已复制${targetList.length}条号码`));
+      navigator.clipboard.writeText(targetList.join(",")).then(()=>alert(`✅ 已复制${targetList.length}条号码`));
     }
   })
   document.querySelectorAll(".copy-btn[data-copy]").forEach(btn=>{
@@ -522,14 +523,14 @@ document.getElementById("genBtn").onclick = function(){
       e.stopPropagation();
       const key = this.dataset.copy;
       const list = groupData[key];
-      navigator.clipboard.writeText(list.join("\n")).then(()=>alert(`✅ 已复制${list.length}条号码`));
+      navigator.clipboard.writeText(list.join(",")).then(()=>alert(`✅ 已复制${list.length}条号码`));
     }
   })
-  document.getElementById("resBox").innerText = `合计生成:${allNumList.length} 注`;
+  document.getElementById("resBox").innerText = `合计生成:${allNumList.length} 注\n${allNumList.join(",")}`;
 }
 document.getElementById("copyAllBtn").onclick = function(){
   if(allNumList.length===0){alert("暂无结果");return;}
-  navigator.clipboard.writeText(allNumList.join("\n")).then(()=>alert(`✅ 已复制全部${allNumList.length}条号码`));
+  navigator.clipboard.writeText(allNumList.join(",")).then(()=>alert(`✅ 已复制全部${allNumList.length}条号码`));
 }
 document.getElementById("checkNumBtn").onclick = function(){
   const input = document.getElementById("checkNumInput").value.trim();
@@ -549,9 +550,10 @@ document.getElementById("checkNumBtn").onclick = function(){
     tip.style.color = "#27ae60";
     tip.innerText = `✅ 号码${input}符合筛选规则，在结果中第${idx+1}位`;
     const resBox = document.getElementById("resBox");
-    const lines = resBox.textContent.split("\n");
-    const newLines = lines.map(line=>line===input ? `<span class="match-highlight">${line}</span>` : line);
-    resBox.innerHTML = newLines.join("\n");
+    //逗号分隔，高亮替换
+    const arr = allNumList.join(",").split(",");
+    const newArr = arr.map(line=>line===input ? `<span class="match-highlight">${line}</span>` : line);
+    resBox.innerHTML = `合计生成:${allNumList.length} 注\n${newArr.join(",")}`;
     const target = resBox.querySelector(".match-highlight");
     if(target) target.scrollIntoView({behavior:"smooth",block:"center"});
   }else{

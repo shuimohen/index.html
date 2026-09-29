@@ -45,45 +45,16 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
 </head>
 <body>
 <div class="card">
-  <h3>历史数据获取</h3>
+  <h3>历史数据获取 & 杀号操作</h3>
   <div class="row">
     <button class="btn" id="fetchHist">一键获取近100期排列五</button>
-    <button class="btn gray" id="parseHist">解析数据</button>
+    <button class="btn gray" id="parseHist">解析数据（剔除低频数字，修改候选池）</button>
     <span class="tip" id="fetchTip"></span>
-  </div>
-  <!-- ========== A池：解析历史频次号码池 ========== -->
-  <div class="pool-title">A池｜解析历史频次号码池（解析后最低2个数字变白）
-    <button class="btn gray" style="margin-left:10px;padding:4px 8px;font-size:13px;" id="resetAPool">A池一键恢复全选</button>
-  </div>
-  <div class="pos-module">
-    <label class="pos-label">万位</label>
-    <input type="checkbox" id="a_wEnable" class="pos-checkbox" checked>
-    <div id="a_wBox" class="row"></div>
-  </div>
-  <div class="pos-module">
-    <label class="pos-label">千位</label>
-    <input type="checkbox" id="a_qEnable" class="pos-checkbox" checked>
-    <div id="a_qBox" class="row"></div>
-  </div>
-  <div class="pos-module">
-    <label class="pos-label">百位</label>
-    <input type="checkbox" id="a_bEnable" class="pos-checkbox" checked>
-    <div id="a_bBox" class="row"></div>
-  </div>
-  <div class="pos-module">
-    <label class="pos-label">十位</label>
-    <input type="checkbox" id="a_sEnable" class="pos-checkbox" checked>
-    <div id="a_sBox" class="row"></div>
-  </div>
-  <div class="pos-module">
-    <label class="pos-label">个位</label>
-    <input type="checkbox" id="a_gEnable" class="pos-checkbox" checked>
-    <div id="a_gBox" class="row"></div>
   </div>
   <div class="row" style="margin-top:16px;">
     <label>上期开奖(5位):</label>
     <input id="lastNum" maxlength="5" placeholder="如01490">
-    <button class="btn" id="calcRule">执行差5/和9杀号</button>
+    <button class="btn" id="calcRule">执行差5/和9杀号（修改候选池）</button>
   </div>
   <div class="check-line">
     <input type="checkbox" id="useCha5" checked><label for="useCha5">启用【差5恒值杀号】</label>
@@ -92,35 +63,35 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
     <input type="checkbox" id="useSum9" checked><label for="useSum9">启用【和9恒值杀号】</label>
   </div>
 </div>
-<!-- ========== B池：杀号运算号码池 ========== -->
+<!-- ========== 唯一候选池 ========== -->
 <div class="card">
-  <div class="pool-title">B池｜杀号运算号码池（执行杀号仅修改本池）
-    <button class="btn gray" style="margin-left:10px;padding:4px 8px;font-size:13px;" id="resetBPool">B池一键恢复全选</button>
+  <div class="pool-title">号码候选池
+    <button class="btn gray" style="margin-left:10px;padding:4px 8px;font-size:13px;" id="resetPool">候选池一键恢复全选</button>
   </div>
   <div class="pos-module">
     <label class="pos-label">万位</label>
-    <input type="checkbox" id="b_wEnable" class="pos-checkbox" checked>
-    <div id="b_wBox" class="row"></div>
+    <input type="checkbox" id="wEnable" class="pos-checkbox" checked>
+    <div id="wBox" class="row"></div>
   </div>
   <div class="pos-module">
     <label class="pos-label">千位</label>
-    <input type="checkbox" id="b_qEnable" class="pos-checkbox" checked>
-    <div id="b_qBox" class="row"></div>
+    <input type="checkbox" id="qEnable" class="pos-checkbox" checked>
+    <div id="qBox" class="row"></div>
   </div>
   <div class="pos-module">
     <label class="pos-label">百位</label>
-    <input type="checkbox" id="b_bEnable" class="pos-checkbox" checked>
-    <div id="b_bBox" class="row"></div>
+    <input type="checkbox" id="bEnable" class="pos-checkbox" checked>
+    <div id="bBox" class="row"></div>
   </div>
   <div class="pos-module">
     <label class="pos-label">十位</label>
-    <input type="checkbox" id="b_sEnable" class="pos-checkbox" checked>
-    <div id="b_sBox" class="row"></div>
+    <input type="checkbox" id="sEnable" class="pos-checkbox" checked>
+    <div id="sBox" class="row"></div>
   </div>
   <div class="pos-module">
     <label class="pos-label">个位</label>
-    <input type="checkbox" id="b_gEnable" class="pos-checkbox" checked>
-    <div id="b_gBox" class="row"></div>
+    <input type="checkbox" id="gEnable" class="pos-checkbox" checked>
+    <div id="gBox" class="row"></div>
   </div>
 </div>
 <div class="card">
@@ -179,49 +150,28 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
 let historyDataList = [];
 const posList = ["w","q","b","s","g"];
 const posMap = {w:"万",q:"千",b:"百",s:"十",g:"个"};
-//初始化A、B池
+//初始化唯一候选池
 posList.forEach(p=>{
-  const aWrap = document.getElementById(`a_${p}Box`);
+  const wrap = document.getElementById(`${p}Box`);
   for(let i=0;i<=9;i++){
     const d = document.createElement("div");
     d.className = "num-block active";
     d.innerText = i;
     d.dataset.digit = i;
     d.onclick = ()=>d.classList.toggle("active");
-    aWrap.appendChild(d);
-  }
-  const bWrap = document.getElementById(`b_${p}Box`);
-  for(let i=0;i<=9;i++){
-    const d = document.createElement("div");
-    d.className = "num-block active";
-    d.innerText = i;
-    d.dataset.digit = i;
-    d.onclick = ()=>d.classList.toggle("active");
-    bWrap.appendChild(d);
+    wrap.appendChild(d);
   }
 })
-//一键恢复A池全部选中
-document.getElementById("resetAPool").onclick = function(){
+//候选池一键恢复全选
+document.getElementById("resetPool").onclick = function(){
   posList.forEach(p=>{
-    document.querySelectorAll(`#a_${p}Box .num-block`).forEach(el=>el.classList.add("active"));
+    document.querySelectorAll(`#${p}Box .num-block`).forEach(el=>el.classList.add("active"));
   })
-  alert("✅A池已恢复全部数字选中");
-}
-//一键恢复B池全部选中
-document.getElementById("resetBPool").onclick = function(){
-  posList.forEach(p=>{
-    document.querySelectorAll(`#b_${p}Box .num-block`).forEach(el=>el.classList.add("active"));
-  })
-  alert("✅B池已恢复全部数字选中");
+  alert("✅候选池已恢复全部数字选中");
 }
 //获取选中数字
-function getSel(p,prefix){
-  return Array.from(document.getElementById(`${prefix}_${p}Box`).querySelectorAll(".num-block.active")).map(x=>Number(x.dataset.digit));
-}
-function clearAllActive(prefix){
-  posList.forEach(p=>{
-    document.querySelectorAll(`#${prefix}_${p}Box .num-block`).forEach(el=>el.classList.remove("active"));
-  })
+function getSel(p){
+  return Array.from(document.getElementById(`${p}Box`).querySelectorAll(".num-block.active")).map(x=>Number(x.dataset.digit));
 }
 //差5 和9配对
 const pairCha5 = {0:5,1:6,2:7,3:8,4:9,5:0,6:1,7:2,8:3,9:4};
@@ -235,7 +185,7 @@ document.getElementById("calcRule").onclick = function(){
   for(let i=0;i<5;i++){
     const p = posList[i];
     const num = arr[i];
-    const box = document.getElementById(`b_${p}Box`);
+    const box = document.getElementById(`${p}Box`);
     const blocks = box.querySelectorAll(".num-block");
     let killSet = new Set();
     if(useCha5) killSet.add(pairCha5[num]);
@@ -248,7 +198,7 @@ document.getElementById("calcRule").onclick = function(){
       })
     })
   }
-  alert("✅杀号完成，B池已对应移除杀号数字；A池不变，支持手动修改B池数字");
+  alert("✅杀号完成，候选池已移除杀号数字");
 }
 document.getElementById("fetchHist").onclick = async function(){
   const tip = document.getElementById("fetchTip");
@@ -276,6 +226,7 @@ document.getElementById("fetchHist").onclick = async function(){
     tip.innerText="全部分页请求失败，请检查CF部署";
   }
 }
+//解析历史数据，直接修改唯一候选池
 document.getElementById("parseHist").onclick = function(){
   if(!historyDataList || historyDataList.length===0){
     alert("请先【一键获取近100期排列五】");
@@ -298,27 +249,23 @@ document.getElementById("parseHist").onclick = function(){
     freq.g[Number(numStr[4])]++;
   })
   posList.forEach(p=>{
-    const blocks = document.getElementById(`a_${p}Box`).querySelectorAll(".num-block");
+    const blocks = document.getElementById(`${p}Box`).querySelectorAll(".num-block");
     blocks.forEach(block=>block.classList.add("active"));
     const freqArr = freq[p].map((cnt,digit)=>({digit,cnt}));
     freqArr.sort((a,b)=>a.cnt - b.cnt);
     const low2 = new Set(freqArr.slice(0,2).map(x=>x.digit));
     blocks.forEach(block=>{
       const d = Number(block.dataset.digit);
-      if(low2.has(d)){
-        block.classList.remove("active");
-      }
+      if(low2.has(d)) block.classList.remove("active");
     })
-    document.getElementById(`a_${p}Enable`).checked = true;
   })
-  alert("✅解析完成，A池已关闭频次最低2个数字");
+  alert("✅解析完成，候选池已关闭频次最低2个数字");
 }
 const weiList = [0,1,2,3,4,5,6,7,8,9];
 const sumList = Array.from({length:28},(v,i)=>i);
 const sum5List = Array.from({length:46},(v,i)=>i);
 let selWei = new Set(weiList);
 let banSum = new Set([0,1,2,3,4,5,6,7,8,9,10]);
-// ======五位和值：默认排除0‑15，35‑45======
 let banSum5 = new Set();
 for(let i=0;i<=15;i++) banSum5.add(i);
 for(let i=35;i<=45;i++) banSum5.add(i);
@@ -377,29 +324,22 @@ function getFrontThreeType(numStr){
   if(vals[0] === 2) return 'frontThree';
   return 'frontSix';
 }
-// =========【修复完成：严格分组判定函数】=========
 function getFiveGroup(numStr) {
   let cnt = {};
   for(let c of numStr) cnt[c] = (cnt[c]||0)+1;
   let counts = Object.values(cnt).sort((a,b)=>b-a);
-  //五同豹子
   if(counts[0] === 5) return 'g55';
-  //四条 4+1
   if(counts[0] === 4) return 'g5';
-  //3个相同
   if(counts[0] === 3) {
-    if(counts[1] === 2) return 'g10'; //3+2 三二组合
-    return 'g20'; //3+1+1 三条
+    if(counts[1] === 2) return 'g10';
+    return 'g20';
   }
-  //最多2个相同
   if(counts[0] === 2) {
-    if(counts[1] === 2) return 'g30'; //2+2+1 两对
-    return 'g60'; //2+1+1+1 一对
+    if(counts[1] === 2) return 'g30';
+    return 'g60';
   }
-  //全部5个不同
   return 'g120';
 }
-// 界面文字保持不变
 function getFiveGroupName(key){
   const map = {
     g120: "组120(五不同)",
@@ -449,23 +389,8 @@ const level2Keys = ["g120","g60","g30","g20","g10","g5","g55"];
 document.getElementById("genBtn").onclick = function(){
   const finalPool = {};
   posList.forEach(p=>{
-    const aEnable = document.getElementById(`a_${p}Enable`).checked;
-    const bEnable = document.getElementById(`b_${p}Enable`).checked;
-    const aDigits = getSel(p,"a");
-    const bDigits = getSel(p,"b");
-    let res;
-    if(aEnable && !bEnable){
-      res = aDigits.length>0 ? aDigits : [0,1,2,3,4,5,6,7,8,9];
-    }else if(!aEnable && bEnable){
-      res = bDigits.length>0 ? bDigits : [0,1,2,3,4,5,6,7,8,9];
-    }else if(aEnable && bEnable){
-      const setA = new Set(aDigits);
-      res = bDigits.filter(d=>setA.has(d));
-      if(res.length===0) res = [0,1,2,3,4,5,6,7,8,9];
-    }else{
-      res = [0,1,2,3,4,5,6,7,8,9];
-    }
-    finalPool[p] = res;
+    const digits = getSel(p);
+    finalPool[p] = digits.length>0 ? digits : [0,1,2,3,4,5,6,7,8,9];
   });
   allNumList = [];
   for(let w of finalPool.w)for(let q of finalPool.q)for(let b of finalPool.b)for(let s of finalPool.s)for(let g of finalPool.g){

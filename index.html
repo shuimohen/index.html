@@ -100,7 +100,7 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
     <div class="check-line">启用筛选：<input type="checkbox" id="weiSwitch" checked></div>
   </div>
   <div class="filter-section">
-    <div class="filter-title">排除前三位和值（0‑27）</div>
+    <div class="filter-title">排除前三位和值（0‑27）【默认排除0-5、24-27】</div>
     <div class="row" id="sumWrap"></div>
     <div class="row">
       <button class="btn gray" onclick="clearBanSum()">清空全部排除和值</button>
@@ -108,7 +108,7 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
     </div>
   </div>
   <div class="filter-section">
-    <div class="filter-title">排除五位和值（0‑45）【默认排除0‑15、35‑45】</div>
+    <div class="filter-title">排除五位和值（0‑45）【默认排除0-14、36-45】</div>
     <div class="row" id="sum5Wrap"></div>
     <div class="row">
       <button class="btn gray" onclick="clearBanSum5()">清空全部排除五位和值</button>
@@ -118,7 +118,7 @@ input[type="text"],input[type="number"]{padding:9px 10px;border:1px solid #ddd;b
     <div class="filter-title">五位跨度筛选（号码最大值‑最小值，范围0~9）</div>
     <div class="row span-row">
       <label>最小跨度：</label>
-      <input type="number" id="spanMin" min="0" max="9" value="0">
+      <input type="number" id="spanMin" min="0" max="9" value="4">
       <label>最大跨度：</label>
       <input type="number" id="spanMax" min="0" max="9" value="9">
       <div class="check-line">启用跨度：<input type="checkbox" id="spanSwitch" checked></div>
@@ -250,10 +250,12 @@ const weiList = [0,1,2,3,4,5,6,7,8,9];
 const sumList = Array.from({length:28},(v,i)=>i);
 const sum5List = Array.from({length:46},(v,i)=>i);
 let selWei = new Set(weiList);
-let banSum = new Set([0,1,2,3,4,5,6,7,8,9,10]);
+// 排除前三位和值：默认排除 0-5、24-27
+let banSum = new Set([0,1,2,3,4,5,24,25,26,27]);
+// 排除五位和值：默认排除 0-14、36-45
 let banSum5 = new Set();
-for(let i=0;i<=15;i++) banSum5.add(i);
-for(let i=35;i<=45;i++) banSum5.add(i);
+for(let i=0;i<=14;i++) banSum5.add(i);
+for(let i=36;i<=45;i++) banSum5.add(i);
 const weiWrap = document.getElementById('weiWrap');
 weiList.forEach(n=>{
   let btn = document.createElement('button');
